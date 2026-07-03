@@ -29,9 +29,14 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   reload. Note: shoe tags UI added per kickoff prompt (prototype lacked it —
   prompt wins); note input likewise.
 
+- **2026-07-03** — **Step 4 done (SHF-5, `bad291c`)**: photo pipeline (EXIF-safe
+  decode → 700px full + 240px thumb JPEGs), photo+item in one transaction,
+  PhotoView blob renderer, thumbs in list. Self-verified: 1600×1200 → 700×525
+  (7KB gradient test), thumbnail survives reload.
+
 ## Next
 
-1. Step 4: photo pipeline — camera/gallery, compression, thumbnails (SHF-5)
+1. Step 5: storefront — 3-column grid + swing-tag filter chips (SHF-6)
 
 ## Decisions
 
