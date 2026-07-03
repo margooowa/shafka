@@ -62,9 +62,16 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   disaster recovery on live data: export (33KB) → wipe 0/0/0 → import →
   2 children/1 item/1 photo back, thumb regenerated. Dedup re-import = 0 added.
 
+- **2026-07-03** — **Step 9 deployed (SHF-10)**: **https://shafka.vercel.app**
+  live (project `shafka` in VK's personal Vercel scope; clean alias was free).
+  Verified: HTTPS, SW active, manifest ok. Gotcha: `vercel --yes` auto-name
+  failed on capitalized dir → `vercel link --project shafka` first.
+  **Left on VK**: export at :5173 → import at shafka.vercel.app (one-time data
+  move), install PWA on S26 Ultra, real in-store 20-second acceptance test.
+
 ## Next
 
-1. Step 9: Vercel deploy + PWA install on S26 Ultra — acceptance test (SHF-10)
+1. VK: data move + phone install + acceptance test → then close SHF-10 and Phase 1
 
 ## Decisions
 
