@@ -74,6 +74,14 @@ export const nowISO = () => new Date().toISOString()
 export type ItemDraft = Pick<Item, 'childId' | 'section' | 'category' | 'size'> &
   Partial<Pick<Item, 'season' | 'color' | 'status' | 'tags' | 'note' | 'photoId'>>
 
+/** Output of the photo pipeline (features/photos/compress.ts) */
+export interface ProcessedPhoto {
+  full: Blob
+  thumb: Blob
+  width: number
+  height: number
+}
+
 export async function addItem(draft: ItemDraft): Promise<Item> {
   const now = nowISO()
   const item: Item = {
@@ -90,6 +98,16 @@ export async function addItem(draft: ItemDraft): Promise<Item> {
   }
   await db.items.add(item)
   return item
+}
+
+/** Photo row + item in one transaction — no orphaned blobs if either write fails */
+export async function addItemWithPhoto(draft: ItemDraft, photo?: ProcessedPhoto): Promise<Item> {
+  if (!photo) return addItem(draft)
+  return db.transaction('rw', db.items, db.photos, async () => {
+    const photoId = newId()
+    await db.photos.add({ id: photoId, ...photo, createdAt: nowISO() })
+    return addItem({ ...draft, photoId })
+  })
 }
 
 export async function updateItem(id: string, patch: Partial<Omit<Item, 'id' | 'createdAt'>>): Promise<void> {

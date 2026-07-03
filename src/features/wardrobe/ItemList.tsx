@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
 import { SEASONS, SECTIONS, sizeLabel, type ChildId, type SectionSlug } from '../../data/catalog'
 import { CARD_BORDER, MUTED } from '../../app/theme'
+import { PhotoView } from '../../ui/PhotoView'
 
 // Plain list for step 3 — replaced by the storefront grid + filters in step 5.
 export function ItemList({ child, section }: { child: ChildId; section: SectionSlug }) {
@@ -37,7 +38,12 @@ export function ItemList({ child, section }: { child: ChildId; section: SectionS
             className="flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5"
             style={{ background: '#fff', border: `1px solid ${CARD_BORDER}` }}
           >
-            <div className="min-w-0">
+            <PhotoView
+              photoId={it.photoId}
+              alt={catLabel(it.category)}
+              className="w-12 h-12 shrink-0 rounded-lg object-cover text-xl"
+            />
+            <div className="min-w-0 flex-1">
               <p className="font-medium text-[15px] truncate">
                 {catLabel(it.category)}
                 {it.status === 'new_with_tag' && ' 🏷️'}

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Camera } from 'lucide-react'
 import {
   CHILDREN,
   SEASONS,
@@ -9,7 +10,8 @@ import {
   type ChildId,
   type SectionSlug,
 } from '../../data/catalog'
-import { addItem, type Item } from '../../data/db'
+import { addItemWithPhoto, type Item, type ProcessedPhoto } from '../../data/db'
+import { processPhotoFile } from '../photos/compress'
 import { MUTED, CARD_BORDER } from '../../app/theme'
 import { Field, Sheet } from '../../ui/Sheet'
 import { PillChip, TagChip } from '../../ui/chips'
@@ -49,6 +51,32 @@ export function AddSheet({
     tags: [],
   })
   const [busy, setBusy] = useState(false)
+  const [photo, setPhoto] = useState<ProcessedPhoto | null>(null)
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string>()
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!photo) {
+      setPreviewUrl(undefined)
+      return
+    }
+    const u = URL.createObjectURL(photo.full)
+    setPreviewUrl(u)
+    return () => URL.revokeObjectURL(u)
+  }, [photo])
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return
+    setPhotoBusy(true)
+    try {
+      setPhoto(await processPhotoFile(file))
+    } catch {
+      setPhoto(null)
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
 
   const accent = CHILDREN[draft.childId].accent
   const sectionDef = SECTIONS[draft.section]
@@ -68,7 +96,7 @@ export function AddSheet({
     if (!canSave || busy) return
     setBusy(true)
     try {
-      const item = await addItem({
+      const item = await addItemWithPhoto({
         childId: draft.childId,
         section: draft.section,
         category: draft.category,
@@ -78,7 +106,7 @@ export function AddSheet({
         note: draft.note.trim() || null,
         status: draft.status,
         tags: draft.tags,
-      })
+      }, photo ?? undefined)
       onSaved(item)
     } finally {
       setBusy(false)
@@ -89,6 +117,31 @@ export function AddSheet({
 
   return (
     <Sheet onClose={onClose} title="Нова річ" accent={accent}>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          void handleFile(e.target.files?.[0])
+          e.target.value = ''
+        }}
+      />
+      <button
+        onClick={() => fileRef.current?.click()}
+        className="w-full rounded-2xl overflow-hidden flex items-center justify-center"
+        style={{ border: '2px dashed #D8D2C6', background: '#fff', height: previewUrl ? 'auto' : 120 }}
+      >
+        {previewUrl ? (
+          <img src={previewUrl} alt="Фото речі" className="w-full max-h-64 object-contain" />
+        ) : (
+          <span className="flex flex-col items-center gap-1.5 text-sm" style={{ color: MUTED }}>
+            <Camera size={26} />
+            {photoBusy ? 'Стискаю фото…' : 'Додати фото або скріншот'}
+          </span>
+        )}
+      </button>
+
       <Field label="Чия річ">
         <div className="flex gap-2">
           {Object.values(CHILDREN).map((c) => (
@@ -189,7 +242,7 @@ export function AddSheet({
       </Field>
 
       <button
-        disabled={!canSave || busy}
+        disabled={!canSave || busy || photoBusy}
         onClick={() => void save()}
         className="w-full rounded-2xl py-3.5 font-semibold text-white text-[15px] mt-1 transition-transform active:scale-[0.98]"
         style={{ background: canSave ? accent : '#CFC9BD' }}
