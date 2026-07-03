@@ -12,10 +12,14 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   **Shafka (SHF)** + project **"Shafka Phase 1 — MVP"**, issues SHF-1…SHF-10.
   CLAUDE.md extended with tracking rules.
 
+- **2026-07-03** — `shafka.jsx` delivered (SHF-1 done). **Step 1 done (SHF-2,
+  `df21e25`)**: scaffold + design tokens + shell (child switcher, section pills,
+  empty state, FAB + toast). Build green; self-verified in Chrome: accent flips
+  pink↔blue, Cyrillic font subsets bundled.
+
 ## Next
 
-1. VK drops `shafka.jsx` into `reference/` (SHF-1 — blocks steps 1 & 5 visuals)
-2. Step 1: scaffold (SHF-2)
+1. Step 2: data layer — Dexie schema, catalogs seeded, persistent storage (SHF-3)
 
 ## Decisions
 
@@ -31,3 +35,6 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
 | 2026-07-03 | Vercel as free static host | VK confirmed; he knows the flow from TravCozy |
 | 2026-07-03 | Tasks in Linear: team Shafka (SHF), project "Shafka Phase 1 — MVP" | Separate area from TravCozy (TRA); one issue per step, IDs in commits |
 | 2026-07-03 | PROJECT.md renamed to MEMORY.md | VK's cross-repo convention (as in TravCozy); one logbook file, role unchanged |
+| 2026-07-03 | Fonts self-hosted via Fontsource, not Google Fonts CDN | Offline PWA must not depend on external font requests; Cyrillic subsets verified in build |
+| 2026-07-03 | lucide-react for icons; Tailwind v4 via @tailwindcss/vite | Matches prototype's icon set; v4 needs no config file |
+| 2026-07-03 | FAB shows placeholder toast until step 3 | Dead buttons confuse; toast says where the feature lands |
