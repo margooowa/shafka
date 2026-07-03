@@ -41,9 +41,17 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   item (Штани 122 + photo) kept. Note: VK started entering real data during
   step-4 verification.
 
+- **2026-07-03** — **Step 6 done (SHF-7, `cd03bbd`)**: DetailSheet (photo, rows,
+  status toggle, delete w/ confirm) + ItemFormSheet now serves add & edit with
+  atomic photo swap. Self-verified: toggle round-trip, edit 134→146 live,
+  delete w/ confirm + live counters. Fixed: DEV-panel "очистити" orphaned photo
+  blobs (found 1 orphan from real usage — cleaned; now clears photos too).
+  Gotcha for tests: Dexie liveQuery doesn't see raw-IndexedDB writes — seed via
+  Dexie or reload after seeding.
+
 ## Next
 
-1. Step 6: item card — view, edit, delete (SHF-7)
+1. Step 7: PWA — manifest, icons, service worker, offline (SHF-8)
 
 ## Decisions
 
