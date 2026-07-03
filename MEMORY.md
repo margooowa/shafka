@@ -49,9 +49,16 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   Gotcha for tests: Dexie liveQuery doesn't see raw-IndexedDB writes — seed via
   Dexie or reload after seeding.
 
+- **2026-07-03** — **Step 7 done (SHF-8, `07b3444`)**: PWA wired — uk manifest,
+  brand icon (vector swing-tag+Ш, sharp-generated PNGs, regen via
+  `node scripts/gen-icons.mjs`), SW precaches shell, fonts CacheFirst at
+  runtime. Offline-verified via server-kill on `npm run preview` (:4173).
+  Gotchas: SW is prod-build only (dev :5173 has none); :4173 is a separate
+  origin → separate empty IndexedDB — don't confuse with :5173 data.
+
 ## Next
 
-1. Step 7: PWA — manifest, icons, service worker, offline (SHF-8)
+1. Step 8: export/import backup zip (SHF-9)
 
 ## Decisions
 
