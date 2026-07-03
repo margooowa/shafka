@@ -23,9 +23,15 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   counters react. Note: persist = "ні" on desktop Chrome is expected — real
   grant happens on Android once the PWA is installed (step 7/9).
 
+- **2026-07-03** — **Step 3 done (SHF-4, `c086f59`)**: AddSheet bottom sheet
+  (cascade + optional fields + shoe tags), FAB wired, temporary plain list.
+  Self-verified: Шорти 110 for daughter saved → toast → row shown → survives
+  reload. Note: shoe tags UI added per kickoff prompt (prototype lacked it —
+  prompt wins); note input likewise.
+
 ## Next
 
-1. Step 3: add-item form — section → category → size cascade, plain list (SHF-4)
+1. Step 4: photo pipeline — camera/gallery, compression, thumbnails (SHF-5)
 
 ## Decisions
 
