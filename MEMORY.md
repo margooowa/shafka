@@ -90,3 +90,7 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
 | 2026-07-03 | Fonts self-hosted via Fontsource, not Google Fonts CDN | Offline PWA must not depend on external font requests; Cyrillic subsets verified in build |
 | 2026-07-03 | lucide-react for icons; Tailwind v4 via @tailwindcss/vite | Matches prototype's icon set; v4 needs no config file |
 | 2026-07-03 | FAB shows placeholder toast until step 3 | Dead buttons confuse; toast says where the feature lands |
+
+## Remote
+
+- GitHub: https://github.com/kozub88/shafka (private, created 2026-07-03)
