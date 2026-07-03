@@ -23,6 +23,15 @@ does **not** read code. Therefore:
   technical details alone and log them in PROJECT.md
 - UI copy: Ukrainian. Code, docs, commits: English
 
+## Task tracking (Linear — respect it)
+
+- Linear team **Shafka (SHF)**, project **"Shafka Phase 1 — MVP"** (linear-server
+  MCP, same workspace as TravCozy but a separate team — don't mix with TRA-)
+- One issue per Phase 1 step (SHF-2…SHF-10); SHF-1 = shafka.jsx delivery
+- When starting a step: move its issue to In Progress; when verified: Done
+- Reference the issue ID (e.g. SHF-2) in the commit message for that step
+- New scope discovered mid-work → new SHF issue, not silent extra work
+
 ## Product guardrails
 
 - **Data safety is non-negotiable**: persistent storage requested, export/import
