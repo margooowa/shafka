@@ -5,13 +5,15 @@ import { ensurePersistentStorage } from '../data/persistence'
 import { INK, CARD_BORDER, MUTED } from './theme'
 import { PillChip } from '../ui/chips'
 import { DebugPanel } from './DebugPanel'
-import { AddSheet } from '../features/item/AddSheet'
+import { ItemFormSheet } from '../features/item/ItemFormSheet'
+import { DetailSheet } from '../features/item/DetailSheet'
 import { Storefront } from '../features/wardrobe/Storefront'
 
 export function App() {
   const [child, setChild] = useState<ChildId>('daughter')
   const [section, setSection] = useState<SectionSlug>('clothes')
   const [showAdd, setShowAdd] = useState(false)
+  const [detailId, setDetailId] = useState<string | null>(null)
   const [toast, setToast] = useState('')
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
@@ -78,7 +80,7 @@ export function App() {
 
       {/* Вітрина */}
       <main className="px-4 pt-2">
-        <Storefront child={child} section={section} onItemClick={() => showToast('Картка речі — у кроці 6 🛠️')} />
+        <Storefront child={child} section={section} onItemClick={(it) => setDetailId(it.id)} />
       </main>
 
       {/* Кнопка додавання */}
@@ -92,7 +94,7 @@ export function App() {
       </button>
 
       {showAdd && (
-        <AddSheet
+        <ItemFormSheet
           defaultChild={child}
           defaultSection={section}
           onClose={() => setShowAdd(false)}
@@ -100,6 +102,18 @@ export function App() {
             setShowAdd(false)
             showToast('Додано в шафку ✓')
           }}
+        />
+      )}
+
+      {detailId && (
+        <DetailSheet
+          itemId={detailId}
+          onClose={() => setDetailId(null)}
+          onDeleted={() => {
+            setDetailId(null)
+            showToast('Видалено')
+          }}
+          onEdited={() => showToast('Збережено ✓')}
         />
       )}
 

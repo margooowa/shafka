@@ -10,11 +10,12 @@ import {
   type ChildId,
   type SectionSlug,
 } from '../../data/catalog'
-import { addItemWithPhoto, type Item, type ProcessedPhoto } from '../../data/db'
+import { addItemWithPhoto, updateItemWithPhoto, type Item, type ProcessedPhoto } from '../../data/db'
 import { processPhotoFile } from '../photos/compress'
 import { MUTED, CARD_BORDER } from '../../app/theme'
 import { Field, Sheet } from '../../ui/Sheet'
 import { PillChip, TagChip } from '../../ui/chips'
+import { PhotoView } from '../../ui/PhotoView'
 
 interface Draft {
   childId: ChildId
@@ -28,28 +29,45 @@ interface Draft {
   tags: string[]
 }
 
-export function AddSheet({
+// One form for both flows: no `item` = add, `item` = edit (prefilled, photo swappable)
+export function ItemFormSheet({
+  item,
   defaultChild,
   defaultSection,
   onClose,
   onSaved,
 }: {
+  item?: Item
   defaultChild: ChildId
   defaultSection: SectionSlug
   onClose: () => void
   onSaved: (item: Item) => void
 }) {
-  const [draft, setDraft] = useState<Draft>({
-    childId: defaultChild,
-    section: defaultSection,
-    category: defaultSection === 'shoes' ? 'shoes' : '',
-    size: '',
-    season: '',
-    color: '',
-    note: '',
-    status: 'new_with_tag',
-    tags: [],
-  })
+  const [draft, setDraft] = useState<Draft>(() =>
+    item
+      ? {
+          childId: item.childId,
+          section: item.section,
+          category: item.category,
+          size: item.size,
+          season: item.season ?? '',
+          color: item.color ?? '',
+          note: item.note ?? '',
+          status: item.status,
+          tags: item.tags,
+        }
+      : {
+          childId: defaultChild,
+          section: defaultSection,
+          category: defaultSection === 'shoes' ? 'shoes' : '',
+          size: '',
+          season: '',
+          color: '',
+          note: '',
+          status: 'new_with_tag',
+          tags: [],
+        },
+  )
   const [busy, setBusy] = useState(false)
   const [photo, setPhoto] = useState<ProcessedPhoto | null>(null)
   const [photoBusy, setPhotoBusy] = useState(false)
@@ -96,7 +114,7 @@ export function AddSheet({
     if (!canSave || busy) return
     setBusy(true)
     try {
-      const item = await addItemWithPhoto({
+      const fields = {
         childId: draft.childId,
         section: draft.section,
         category: draft.category,
@@ -106,8 +124,13 @@ export function AddSheet({
         note: draft.note.trim() || null,
         status: draft.status,
         tags: draft.tags,
-      }, photo ?? undefined)
-      onSaved(item)
+      }
+      if (item) {
+        await updateItemWithPhoto(item.id, fields, photo ?? undefined)
+        onSaved({ ...item, ...fields })
+      } else {
+        onSaved(await addItemWithPhoto(fields, photo ?? undefined))
+      }
     } finally {
       setBusy(false)
     }
@@ -116,7 +139,7 @@ export function AddSheet({
   const inputStyle = { background: '#fff', border: `1.5px solid ${CARD_BORDER}` }
 
   return (
-    <Sheet onClose={onClose} title="Нова річ" accent={accent}>
+    <Sheet onClose={onClose} title={item ? 'Редагувати річ' : 'Нова річ'} accent={accent}>
       <input
         ref={fileRef}
         type="file"
@@ -130,10 +153,12 @@ export function AddSheet({
       <button
         onClick={() => fileRef.current?.click()}
         className="w-full rounded-2xl overflow-hidden flex items-center justify-center"
-        style={{ border: '2px dashed #D8D2C6', background: '#fff', height: previewUrl ? 'auto' : 120 }}
+        style={{ border: '2px dashed #D8D2C6', background: '#fff', height: previewUrl || item?.photoId ? 'auto' : 120 }}
       >
         {previewUrl ? (
           <img src={previewUrl} alt="Фото речі" className="w-full max-h-64 object-contain" />
+        ) : item?.photoId ? (
+          <PhotoView photoId={item.photoId} kind="full" alt="Фото речі" className="w-full max-h-64 object-contain" />
         ) : (
           <span className="flex flex-col items-center gap-1.5 text-sm" style={{ color: MUTED }}>
             <Camera size={26} />
@@ -141,6 +166,11 @@ export function AddSheet({
           </span>
         )}
       </button>
+      {item && (
+        <p className="text-xs text-center -mt-2" style={{ color: MUTED }}>
+          Торкнись фото, щоб замінити
+        </p>
+      )}
 
       <Field label="Чия річ">
         <div className="flex gap-2">
@@ -247,7 +277,7 @@ export function AddSheet({
         className="w-full rounded-2xl py-3.5 font-semibold text-white text-[15px] mt-1 transition-transform active:scale-[0.98]"
         style={{ background: canSave ? accent : '#CFC9BD' }}
       >
-        Зберегти в шафку
+        {item ? 'Зберегти зміни' : 'Зберегти в шафку'}
       </button>
       {!canSave && (
         <p className="text-xs text-center -mt-1" style={{ color: MUTED }}>

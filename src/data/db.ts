@@ -114,6 +114,22 @@ export async function updateItem(id: string, patch: Partial<Omit<Item, 'id' | 'c
   await db.items.update(id, { ...patch, updatedAt: nowISO() })
 }
 
+/** Update an item; when a new photo is supplied, swap the blob atomically */
+export async function updateItemWithPhoto(
+  id: string,
+  patch: Partial<Omit<Item, 'id' | 'createdAt'>>,
+  photo?: ProcessedPhoto,
+): Promise<void> {
+  if (!photo) return updateItem(id, patch)
+  await db.transaction('rw', db.items, db.photos, async () => {
+    const existing = await db.items.get(id)
+    if (existing?.photoId) await db.photos.delete(existing.photoId)
+    const photoId = newId()
+    await db.photos.add({ id: photoId, ...photo, createdAt: nowISO() })
+    await db.items.update(id, { ...patch, photoId, updatedAt: nowISO() })
+  })
+}
+
 export async function deleteItem(id: string): Promise<void> {
   await db.transaction('rw', db.items, db.photos, async () => {
     const item = await db.items.get(id)

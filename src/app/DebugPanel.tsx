@@ -36,7 +36,14 @@ export function DebugPanel({ child, section }: { child: ChildId; section: Sectio
         <button className="rounded-md px-2 py-1 font-medium" style={{ background: '#EFECE5', color: '#2A2622' }} onClick={() => void addTestItem()}>
           ➕ тестова річ
         </button>
-        <button className="rounded-md px-2 py-1" style={{ background: '#EFECE5' }} onClick={() => void db.items.clear()}>
+        <button
+          className="rounded-md px-2 py-1"
+          style={{ background: '#EFECE5' }}
+          onClick={() => void db.transaction('rw', db.items, db.photos, async () => {
+            await db.items.clear()
+            await db.photos.clear()
+          })}
+        >
           🗑 очистити
         </button>
       </div>
