@@ -56,9 +56,15 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   Gotchas: SW is prod-build only (dev :5173 has none); :4173 is a separate
   origin → separate empty IndexedDB — don't confuse with :5173 data.
 
+- **2026-07-03** — **Step 8 done (SHF-9, `00646ef`)**: backup zip via fflate
+  (manifest.json + photos/<id>.jpg; thumbs regenerated on import; merge by id,
+  missing-only). Archive button in header → BackupSheet. Self-verified full
+  disaster recovery on live data: export (33KB) → wipe 0/0/0 → import →
+  2 children/1 item/1 photo back, thumb regenerated. Dedup re-import = 0 added.
+
 ## Next
 
-1. Step 8: export/import backup zip (SHF-9)
+1. Step 9: Vercel deploy + PWA install on S26 Ultra — acceptance test (SHF-10)
 
 ## Decisions
 
