@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus, Shirt } from 'lucide-react'
+import { Archive, Plus, Shirt } from 'lucide-react'
 import { CHILDREN, SECTIONS, SECTION_ORDER, type ChildId, type SectionSlug } from '../data/catalog'
 import { ensurePersistentStorage } from '../data/persistence'
 import { INK, CARD_BORDER, MUTED } from './theme'
@@ -8,11 +8,13 @@ import { DebugPanel } from './DebugPanel'
 import { ItemFormSheet } from '../features/item/ItemFormSheet'
 import { DetailSheet } from '../features/item/DetailSheet'
 import { Storefront } from '../features/wardrobe/Storefront'
+import { BackupSheet } from '../features/backup/BackupSheet'
 
 export function App() {
   const [child, setChild] = useState<ChildId>('daughter')
   const [section, setSection] = useState<SectionSlug>('clothes')
   const [showAdd, setShowAdd] = useState(false)
+  const [showBackup, setShowBackup] = useState(false)
   const [detailId, setDetailId] = useState<string | null>(null)
   const [toast, setToast] = useState('')
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -38,6 +40,14 @@ export function App() {
           <h1 className="font-display" style={{ fontWeight: 600, fontSize: 20, letterSpacing: '-0.02em' }}>
             Шафка
           </h1>
+          <button
+            onClick={() => setShowBackup(true)}
+            className="ml-auto p-2 rounded-full"
+            aria-label="Резервна копія"
+            style={{ color: MUTED }}
+          >
+            <Archive size={20} />
+          </button>
         </div>
 
         {/* Перемикач дітей */}
@@ -101,6 +111,17 @@ export function App() {
           onSaved={() => {
             setShowAdd(false)
             showToast('Додано в шафку ✓')
+          }}
+        />
+      )}
+
+      {showBackup && (
+        <BackupSheet
+          accent={accent}
+          onClose={() => setShowBackup(false)}
+          onDone={(msg) => {
+            setShowBackup(false)
+            showToast(msg)
           }}
         />
       )}

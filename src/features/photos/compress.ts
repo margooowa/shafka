@@ -11,7 +11,7 @@ type Decoded = ImageBitmap | HTMLImageElement
 
 // createImageBitmap applies EXIF orientation ('from-image' is the spec default,
 // stated explicitly for older Chrome); <img> fallback for browsers without it.
-async function decode(file: File): Promise<Decoded> {
+async function decode(file: Blob): Promise<Decoded> {
   try {
     return await createImageBitmap(file, { imageOrientation: 'from-image' })
   } catch {
@@ -51,6 +51,16 @@ function toJpeg(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('jpeg encode failed'))), 'image/jpeg', quality)
   })
+}
+
+/** Rebuild a thumbnail from a stored full-size JPEG (used by backup import) */
+export async function thumbFor(full: Blob): Promise<Blob> {
+  const src = await decode(full)
+  try {
+    return await toJpeg(drawScaled(src, THUMB_MAX).canvas, THUMB_QUALITY)
+  } finally {
+    if ('close' in src) src.close()
+  }
 }
 
 export async function processPhotoFile(file: File): Promise<ProcessedPhoto> {
