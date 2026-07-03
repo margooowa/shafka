@@ -15,7 +15,7 @@ This plan covers architecture, data model, and the Phase 1 step breakdown.
 | Styling | Tailwind CSS v4 | Fast iteration, easy to encode the agreed design tokens (colors, fonts) as a theme; will be aligned with whatever the prototype uses once `reference/shafka.jsx` is in place |
 | Local DB | Dexie 4 (IndexedDB wrapper) | Mature, has **schema versioning built in** (critical: Phases 2–4 will add fields without data loss), and `liveQuery` gives reactive UI updates when data changes |
 | PWA | vite-plugin-pwa | Generates manifest + service worker; app shell fully cached → works offline in a store with no signal |
-| Zip (backup) | small client-side zip lib | For export/import of JSON + photos. Exact library is a minor detail — decided during implementation, logged in PROJECT.md |
+| Zip (backup) | small client-side zip lib | For export/import of JSON + photos. Exact library is a minor detail — decided during implementation, logged in MEMORY.md |
 
 No server, no accounts, no backend of any kind in Phase 1. The only "online" piece is
 static file delivery (see §4.5 — stable HTTPS origin).
@@ -237,7 +237,7 @@ guided, copy-paste walkthrough. Rollback is trivial (it's just static files).
 ```
 Shafka/
 ├── PLAN.md              ← this file
-├── PROJECT.md           ← logbook: done / next / decisions
+├── MEMORY.md            ← logbook: done / next / decisions
 ├── reference/           ← shafka.jsx prototype (design source of truth for UI)
 ├── public/              ← PWA icons, favicon
 └── src/
@@ -295,7 +295,7 @@ Steps 1 and 5 lean on `reference/shafka.jsx` for exact visuals and UI copy —
 3. Vercel as the free static host (you already know its flow from TravCozy) — or
    prefer GitHub Pages / Netlify?
 
-## 9. Minor decisions I'll make alone (and log in PROJECT.md)
+## 9. Minor decisions I'll make alone (and log in MEMORY.md)
 
 Zip library choice, exact thumbnail size, icon generation, Tailwind config details,
 form validation messages, empty-state illustrations.

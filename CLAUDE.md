@@ -1,7 +1,7 @@
 # CLAUDE.md — Shafka (Шафка)
 
 Kids' wardrobe catalog. Local-first PWA, mobile-first, UI in Ukrainian.
-Full plan: PLAN.md. Logbook: PROJECT.md (keep it current).
+Full plan: PLAN.md. Logbook: MEMORY.md — read it at session start, keep it current.
 
 ## Who you're working with
 
@@ -18,9 +18,9 @@ does **not** read code. Therefore:
 - **Small increments.** One step = one touchable feature. Before telling VK a step
   is done, verify it yourself in a browser; then tell VK how to verify it too
 - **Commit after every working step** with a clear message
-- **PROJECT.md is the shared logbook**: done / next / decisions + why
+- **MEMORY.md is the shared logbook**: done / next / decisions + why
 - **Ask VK** at forks affecting the product or future phases; decide minor
-  technical details alone and log them in PROJECT.md
+  technical details alone and log them in MEMORY.md
 - UI copy: Ukrainian. Code, docs, commits: English
 
 ## Task tracking (Linear — respect it)

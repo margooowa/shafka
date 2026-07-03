@@ -1,6 +1,7 @@
-# PROJECT — Shafka logbook
+# MEMORY — Shafka logbook
 
-Shared log between sessions: what's done, what's next, which decisions were made and why.
+Shared log between sessions: what's done, what's next, which decisions were made
+and why. Read alongside CLAUDE.md at session start (same convention as TravCozy).
 
 ## Status
 
@@ -29,4 +30,4 @@ Shared log between sessions: what's done, what's next, which decisions were made
 | 2026-07-03 | Shoes: whole sizes 22–38 only | VK confirmed |
 | 2026-07-03 | Vercel as free static host | VK confirmed; he knows the flow from TravCozy |
 | 2026-07-03 | Tasks in Linear: team Shafka (SHF), project "Shafka Phase 1 — MVP" | Separate area from TravCozy (TRA); one issue per step, IDs in commits |
-| 2026-07-03 | No separate repo MEMORY.md | PROJECT.md is the logbook per kickoff prompt; two files with one role would drift |
+| 2026-07-03 | PROJECT.md renamed to MEMORY.md | VK's cross-repo convention (as in TravCozy); one logbook file, role unchanged |
