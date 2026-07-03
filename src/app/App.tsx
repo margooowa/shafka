@@ -1,14 +1,20 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus, Shirt } from 'lucide-react'
 import { CHILDREN, SECTIONS, SECTION_ORDER, type ChildId, type SectionSlug } from '../data/catalog'
+import { ensurePersistentStorage } from '../data/persistence'
 import { INK, MUTED, CARD_BORDER } from './theme'
 import { PillChip } from '../ui/chips'
+import { DebugPanel } from './DebugPanel'
 
 export function App() {
   const [child, setChild] = useState<ChildId>('daughter')
   const [section, setSection] = useState<SectionSlug>('clothes')
   const [toast, setToast] = useState('')
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  useEffect(() => {
+    void ensurePersistentStorage()
+  }, [])
 
   const accent = CHILDREN[child].accent
 
@@ -87,6 +93,8 @@ export function App() {
       >
         <Plus size={28} />
       </button>
+
+      {import.meta.env.DEV && <DebugPanel child={child} section={section} />}
 
       {/* Тост */}
       {toast && (

@@ -11,6 +11,8 @@
   "dependencies": {
     "@fontsource/rubik": "^5.2.5",
     "@fontsource/unbounded": "^5.2.5",
+    "dexie": "^4.4.4",
+    "dexie-react-hooks": "^4.4.0",
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
