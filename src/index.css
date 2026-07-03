@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #2A2622;
+  --muted: #8B8478;
+  --page-bg: #FAF9F6;
+  --chip-bg: #EFECE5;
+  --card-border: #EAE6DE;
+}
+
+html {
+  background: var(--page-bg);
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Rubik", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.font-display {
+  font-family: "Unbounded", sans-serif;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
