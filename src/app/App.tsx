@@ -2,13 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { Plus, Shirt } from 'lucide-react'
 import { CHILDREN, SECTIONS, SECTION_ORDER, type ChildId, type SectionSlug } from '../data/catalog'
 import { ensurePersistentStorage } from '../data/persistence'
-import { INK, MUTED, CARD_BORDER } from './theme'
+import { INK, CARD_BORDER, MUTED } from './theme'
 import { PillChip } from '../ui/chips'
 import { DebugPanel } from './DebugPanel'
+import { AddSheet } from '../features/item/AddSheet'
+import { ItemList } from '../features/wardrobe/ItemList'
 
 export function App() {
   const [child, setChild] = useState<ChildId>('daughter')
   const [section, setSection] = useState<SectionSlug>('clothes')
+  const [showAdd, setShowAdd] = useState(false)
   const [toast, setToast] = useState('')
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
@@ -73,26 +76,32 @@ export function App() {
         </div>
       </header>
 
-      {/* Сітка — поки без даних (крок 2–3) */}
+      {/* Список речей — простий, сітка з фільтрами прийде у кроці 5 */}
       <main className="px-4 pt-2">
-        <div className="text-center py-16">
-          <div className="text-4xl mb-3">👕</div>
-          <p className="font-medium">Тут поки порожньо</p>
-          <p className="text-sm mt-1" style={{ color: MUTED }}>
-            Натисни «+», щоб додати першу річ
-          </p>
-        </div>
+        <ItemList child={child} section={section} />
       </main>
 
       {/* Кнопка додавання */}
       <button
-        onClick={() => showToast('Додавання речей — у кроці 3 🛠️')}
+        onClick={() => setShowAdd(true)}
         className="fixed bottom-6 right-5 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90"
         style={{ background: accent, color: '#fff' }}
         aria-label="Додати річ"
       >
         <Plus size={28} />
       </button>
+
+      {showAdd && (
+        <AddSheet
+          defaultChild={child}
+          defaultSection={section}
+          onClose={() => setShowAdd(false)}
+          onSaved={() => {
+            setShowAdd(false)
+            showToast('Додано в шафку ✓')
+          }}
+        />
+      )}
 
       {import.meta.env.DEV && <DebugPanel child={child} section={section} />}
 

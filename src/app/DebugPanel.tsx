@@ -26,7 +26,7 @@ export function DebugPanel({ child, section }: { child: ChildId; section: Sectio
       style={{ background: '#fff', border: '1px dashed #C9C2B4', color: MUTED }}
     >
       <p className="font-semibold" style={{ color: '#8A6D1A' }}>
-        DEV · крок 2
+        DEV
       </p>
       <p>💾 persist: {persisted === undefined ? '…' : persisted ? 'так' : 'ні'}</p>
       <p>
