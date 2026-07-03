@@ -6,7 +6,7 @@ import { INK, CARD_BORDER, MUTED } from './theme'
 import { PillChip } from '../ui/chips'
 import { DebugPanel } from './DebugPanel'
 import { AddSheet } from '../features/item/AddSheet'
-import { ItemList } from '../features/wardrobe/ItemList'
+import { Storefront } from '../features/wardrobe/Storefront'
 
 export function App() {
   const [child, setChild] = useState<ChildId>('daughter')
@@ -76,9 +76,9 @@ export function App() {
         </div>
       </header>
 
-      {/* Список речей — простий, сітка з фільтрами прийде у кроці 5 */}
+      {/* Вітрина */}
       <main className="px-4 pt-2">
-        <ItemList child={child} section={section} />
+        <Storefront child={child} section={section} onItemClick={() => showToast('Картка речі — у кроці 6 🛠️')} />
       </main>
 
       {/* Кнопка додавання */}
