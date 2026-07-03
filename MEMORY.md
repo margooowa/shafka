@@ -34,9 +34,16 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   PhotoView blob renderer, thumbs in list. Self-verified: 1600×1200 → 700×525
   (7KB gradient test), thumbnail survives reload.
 
+- **2026-07-03** — **Step 5 done (SHF-6, `eafcd12`)**: storefront grid + faceted
+  swing-tag/pill chips with live counters. Self-verified the 20-second scenario:
+  "110 · 5" → "Шорти · 3" → three shorts on screen, category counters recompute
+  under the size filter. Demo items cleaned after verification; VK's first real
+  item (Штани 122 + photo) kept. Note: VK started entering real data during
+  step-4 verification.
+
 ## Next
 
-1. Step 5: storefront — 3-column grid + swing-tag filter chips (SHF-6)
+1. Step 6: item card — view, edit, delete (SHF-7)
 
 ## Decisions
 
