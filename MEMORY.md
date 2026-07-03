@@ -17,9 +17,15 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   empty state, FAB + toast). Build green; self-verified in Chrome: accent flips
   pink↔blue, Cyrillic font subsets bundled.
 
+- **2026-07-03** — **Step 2 done (SHF-3, `f2bd0ee`)**: Dexie schema (4 tables,
+  compound [childId+section] index), children seeded, persist() requested +
+  recorded, CRUD helpers. Self-verified: test item survives reload, live
+  counters react. Note: persist = "ні" on desktop Chrome is expected — real
+  grant happens on Android once the PWA is installed (step 7/9).
+
 ## Next
 
-1. Step 2: data layer — Dexie schema, catalogs seeded, persistent storage (SHF-3)
+1. Step 3: add-item form — section → category → size cascade, plain list (SHF-4)
 
 ## Decisions
 
