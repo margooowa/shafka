@@ -69,9 +69,21 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   **Left on VK**: export at :5173 → import at shafka.vercel.app (one-time data
   move), install PWA on S26 Ultra, real in-store 20-second acceptance test.
 
+- **2026-07-03** — GitHub remote created and pushed: private repo
+  `kozub88/shafka`. **Marharyta (VK's wife) joins development** from a Windows
+  laptop. She has her own GitHub account — username NOT yet provided.
+
 ## Next
 
-1. VK: data move + phone install + acceptance test → then close SHF-10 and Phase 1
+1. **Marharyta onboarding (blocked on her GitHub username):** invite as
+   collaborator (`gh api repos/kozub88/shafka/collaborators/<username> -X PUT`),
+   she accepts → clone → `npm install` → `npm run dev` (steps already given:
+   winget Git+Node, git config identity). Decide: add her to Linear team Shafka?
+   PR workflow / branch protection wanted?
+2. **VK, to close SHF-10 + Phase 1:** one-time data move (export at :5173 →
+   import at https://shafka.vercel.app), install PWA on S26 Ultra (Chrome ⋮ →
+   Add to Home screen), then the real in-store 20-second acceptance test.
+3. Two-person git rule until protection exists: pull before work, pull before push.
 
 ## Decisions
 
