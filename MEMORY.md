@@ -95,6 +95,10 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
    untouched). Open follow-ups: (b) add her to Linear team Shafka? (c) PR workflow
    / branch protection wanted? (d) VK to pull `margooowa/shafka` as the source of
    truth going forward (his `kozub88/shafka` no longer primary).
+   Resolved (2026-07-05): she uses her **own** Linear (`linear.app/shafka`), not
+   VK's. Phase 2 (AI photo recognition) backlog drafted — 7 issues ready to seed
+   her board (source-field migration + key-handling decision unblock the rest).
+   Optional: connect the Linear connector on her laptop so Claude can drive her board.
 2. **VK, to close SHF-10 + Phase 1:** one-time data move (export at :5173 →
    import at https://shafka.vercel.app), install PWA on S26 Ultra (Chrome ⋮ →
    Add to Home screen), then the real in-store 20-second acceptance test.
@@ -119,6 +123,7 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
 | 2026-07-03 | FAB shows placeholder toast until step 3 | Dead buttons confuse; toast says where the feature lands |
 | 2026-07-04 | Canonical repo moves to `margooowa/shafka` (Marharyta's personal GitHub) | She couldn't access VK's private `kozub88/shafka`; team now works from her repo |
 | 2026-07-04 | Shafka commits use per-repo identity `margooowa <margooowa@ukr.net>` | Laptop's global Git is her work account; personal identity keeps Shafka history attributed to her GitHub without touching work config |
+| 2026-07-05 | Marharyta runs Shafka **fully separate** from VK: own repo, own commit identity, and her **own Linear workspace** (`linear.app/shafka`) — she does NOT join VK's Linear | Her preference for full independence; each tracks their own side |
 
 ## Remote
 
