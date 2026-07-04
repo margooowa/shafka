@@ -73,13 +73,28 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   `kozub88/shafka`. **Marharyta (VK's wife) joins development** from a Windows
   laptop. She has her own GitHub account — username NOT yet provided.
 
+- **2026-07-04** — **Marharyta onboarded on her Windows 11 laptop.** Repo lives
+  at `C:\шафка\Shafka\Shafka`; Node 24.16 / npm 11.13. **Plan changed: instead of
+  collaborating on `kozub88/shafka` (VK's private repo, unreachable from her
+  machine), her code goes to her own personal GitHub `margooowa/shafka`** — full
+  history pushed (`77fe78d`), local↔remote in sync. Remotes on her machine:
+  `origin` = `https://margooowa@github.com/margooowa/shafka.git`, `kozub` =
+  `kozub88/shafka`. Auth gotcha: this laptop's global Git is her **work** identity
+  (GitLab; cached github.com token = work account `marharytaKozub`), so pushing
+  as `margooowa` requires the username in the origin URL to force GCM to auth the
+  personal account (browser sign-in). Also fixed: transferred `node_modules` had
+  flattened Unix-only `.bin` shims (no Windows `.cmd`) → `'tsc' not recognized`;
+  ran `npm ci` (375 pkgs, 0 vuln) → `npm run build` green.
+
 ## Next
 
-1. **Marharyta onboarding (blocked on her GitHub username):** invite as
-   collaborator (`gh api repos/kozub88/shafka/collaborators/<username> -X PUT`),
-   she accepts → clone → `npm install` → `npm run dev` (steps already given:
-   winget Git+Node, git config identity). Decide: add her to Linear team Shafka?
-   PR workflow / branch protection wanted?
+1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,
+   app builds & runs on her laptop. Resolved: **`margooowa/shafka` is now the
+   canonical/main repo** the team works from; **her Shafka commits use personal
+   identity `margooowa <margooowa@ukr.net>`** (set per-repo, work global identity
+   untouched). Open follow-ups: (b) add her to Linear team Shafka? (c) PR workflow
+   / branch protection wanted? (d) VK to pull `margooowa/shafka` as the source of
+   truth going forward (his `kozub88/shafka` no longer primary).
 2. **VK, to close SHF-10 + Phase 1:** one-time data move (export at :5173 →
    import at https://shafka.vercel.app), install PWA on S26 Ultra (Chrome ⋮ →
    Add to Home screen), then the real in-store 20-second acceptance test.
@@ -102,7 +117,12 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
 | 2026-07-03 | Fonts self-hosted via Fontsource, not Google Fonts CDN | Offline PWA must not depend on external font requests; Cyrillic subsets verified in build |
 | 2026-07-03 | lucide-react for icons; Tailwind v4 via @tailwindcss/vite | Matches prototype's icon set; v4 needs no config file |
 | 2026-07-03 | FAB shows placeholder toast until step 3 | Dead buttons confuse; toast says where the feature lands |
+| 2026-07-04 | Canonical repo moves to `margooowa/shafka` (Marharyta's personal GitHub) | She couldn't access VK's private `kozub88/shafka`; team now works from her repo |
+| 2026-07-04 | Shafka commits use per-repo identity `margooowa <margooowa@ukr.net>` | Laptop's global Git is her work account; personal identity keeps Shafka history attributed to her GitHub without touching work config |
 
 ## Remote
 
-- GitHub: https://github.com/kozub88/shafka (private, created 2026-07-03)
+- GitHub (VK): https://github.com/kozub88/shafka (private, created 2026-07-03)
+- GitHub (Marharyta): https://github.com/margooowa/shafka (her personal account;
+  full history pushed 2026-07-04). Her laptop: `origin` → margooowa, `kozub` →
+  kozub88.
