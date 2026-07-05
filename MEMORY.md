@@ -128,6 +128,14 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   blob from Dexie and rotates that, swapping on save. Build green, live on dev via
   HMR. **Pending user visual verify.**
 
+- **2026-07-05** — **SHA-7 (cloud schema) in progress** — `supabase/schema.sql`
+  written (version-controlled): tables `children` / `items` / `photos_meta`
+  mirroring the Dexie model, each with `updated_at` (last-write-wins) + `deleted`
+  tombstone; RLS owner-only (`user_id = auth.uid()`); private Storage bucket
+  `photos` (full JPEGs at `<user_id>/<photo_id>.jpg`, thumbs regenerated locally on
+  pull); per-user updated_at indexes for incremental pull. Re-runnable script.
+  **Pending: user pastes it into the Supabase SQL Editor + verifies tables/bucket.**
+
 ## Next
 
 1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,
@@ -168,6 +176,8 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
 | 2026-07-05 | Marharyta runs Shafka **fully separate** from VK: own repo, own commit identity, and her **own Linear workspace** (`linear.app/shafka`) — she does NOT join VK's Linear | Her preference for full independence; each tracks their own side |
 | 2026-07-05 | Phase 2 = **cloud sync on Supabase**, **offline-first** (Dexie local cache + background push/pull, last-write-wins by updatedAt, tombstone deletes) | Data/photos must be reachable from any device without breaking the store-with-no-signal guarantee; app already UUID+timestamp ready (PLAN §7) |
 | 2026-07-05 | Kids' photos → **private Storage bucket + RLS**, owner-only account | Privacy of children's images; only the signed-in account reads its own data |
+| 2026-07-05 | Marharyta deploys her **own Vercel project** (import `margooowa/shafka`, GitHub auto-deploy, her Supabase env vars) — NOT VK's `shafka.vercel.app` | Local `.vercel` link points to VK's org; keeps her stack fully separate (own repo/Supabase/Vercel), consistent with the separation decision |
+| 2026-07-05 | **First Vercel deploy waits until sync (SHA-9) is built** | So the first phone deploy shows the full cross-device experience, not a half-wired sign-in with no sync |
 
 ## Remote
 
