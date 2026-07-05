@@ -10,7 +10,7 @@
 
 -- ── Tables ──────────────────────────────────────────────────────────────
 create table if not exists public.children (
-  id           uuid primary key,
+  id           text primary key,          -- catalog slug ('son' / 'daughter'), not a UUID
   user_id      uuid not null default auth.uid() references auth.users (id) on delete cascade,
   name         text not null,
   accent_color text not null,
@@ -23,7 +23,7 @@ create table if not exists public.children (
 create table if not exists public.items (
   id         uuid primary key,
   user_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
-  child_id   uuid not null,
+  child_id   text not null,               -- references children.id (a slug), not a UUID
   section    text not null,
   category   text not null,
   size       text not null,
