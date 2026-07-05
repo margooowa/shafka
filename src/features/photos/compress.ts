@@ -1,11 +1,12 @@
 import type { ProcessedPhoto } from '../../data/db'
 
 // Photo pipeline per PLAN §4.1: one decode, two JPEG outputs —
-// full ~700px (item card) + thumb ~240px (storefront grid).
-const FULL_MAX = 700
-const THUMB_MAX = 240
-const FULL_QUALITY = 0.72
-const THUMB_QUALITY = 0.7
+// full ~1600px (item card, looks sharp on desktop) + thumb ~320px (grid).
+// Raised from 700px/q0.72 which looked soft on PC; ~250–450 KB per photo now.
+const FULL_MAX = 1600
+const THUMB_MAX = 320
+const FULL_QUALITY = 0.85
+const THUMB_QUALITY = 0.72
 
 type Decoded = ImageBitmap | HTMLImageElement | HTMLCanvasElement
 
