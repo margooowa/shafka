@@ -229,6 +229,15 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   SHA-10 delete propagation satisfied via cloud-first delete + pull. **SHA-11
   (offline queue) is now obsolete.** Build green; pending push+deploy + verify.
 
+- **2026-07-05** — **Storefront filters reworked** (`Storefront.tsx`): **SHA-15** —
+  size + category are now independent AND-facets that BOTH persist (old code reset
+  category when a size was tapped); **+ season added** as a third facet. All three
+  cross-count (each chip reflects the other two selections; no empty combos). Labels:
+  «Всі типи» / «Всі сезони». Season row shows when >1 season present. **SHA-16** — PWA
+  auto-update: manual SW registration (`injectRegister:false`) + `registration.update()`
+  poll (60s + on focus) so deploys self-refresh — one final manual cache-clear needed
+  to adopt the fix, automatic after. All deployed to shafka-alpha.vercel.app.
+
 ## Next
 
 1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,

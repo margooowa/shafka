@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Tag } from 'lucide-react'
 import { db, type Item } from '../../data/db'
-import { CHILDREN, SECTIONS, sizeLabel, type ChildId, type SectionSlug } from '../../data/catalog'
+import { CHILDREN, SEASONS, SECTIONS, sizeLabel, type ChildId, type SectionSlug } from '../../data/catalog'
 import { CARD_BORDER, MUTED } from '../../app/theme'
 import { PillChip, TagChip } from '../../ui/chips'
 import { PhotoView } from '../../ui/PhotoView'
@@ -23,10 +23,12 @@ export function Storefront({
 }) {
   const [sizeFilter, setSizeFilter] = useState('all')
   const [catFilter, setCatFilter] = useState('all')
+  const [seasonFilter, setSeasonFilter] = useState('all')
 
   useEffect(() => {
     setSizeFilter('all')
     setCatFilter('all')
+    setSeasonFilter('all')
   }, [child, section])
 
   const scoped = useLiveQuery(
@@ -37,38 +39,48 @@ export function Storefront({
   const def = SECTIONS[section]
   const accent = CHILDREN[child].accent
 
-  // Each facet is counted against the OTHER facet's current selection, so the
-  // size chips reflect the chosen category and vice-versa.
-  const catScoped = useMemo(
-    () => (catFilter === 'all' ? (scoped ?? []) : (scoped ?? []).filter((it) => it.category === catFilter)),
-    [scoped, catFilter],
-  )
-  const sizeScoped = useMemo(
-    () => (sizeFilter === 'all' ? (scoped ?? []) : (scoped ?? []).filter((it) => it.size === sizeFilter)),
-    [scoped, sizeFilter],
-  )
-
+  // Three independent AND-facets (size · category · season). Each facet's chips
+  // are counted against the OTHER two facets' current selections, so a chip
+  // always says how many items you'll see and no combination is ever empty.
   const sizesPresent = useMemo(() => {
     const counts = new Map<string, number>()
-    for (const it of catScoped) counts.set(it.size, (counts.get(it.size) ?? 0) + 1)
+    for (const it of scoped ?? [])
+      if ((catFilter === 'all' || it.category === catFilter) && (seasonFilter === 'all' || it.season === seasonFilter))
+        counts.set(it.size, (counts.get(it.size) ?? 0) + 1)
     return def.sizes.filter((s) => counts.has(s)).map((s) => ({ size: s, count: counts.get(s)! }))
-  }, [catScoped, def])
+  }, [scoped, catFilter, seasonFilter, def])
 
   const catsPresent = useMemo(() => {
     const counts = new Map<string, number>()
-    for (const it of sizeScoped) counts.set(it.category, (counts.get(it.category) ?? 0) + 1)
+    for (const it of scoped ?? [])
+      if ((sizeFilter === 'all' || it.size === sizeFilter) && (seasonFilter === 'all' || it.season === seasonFilter))
+        counts.set(it.category, (counts.get(it.category) ?? 0) + 1)
     return def.categories.filter((c) => counts.has(c.slug)).map((c) => ({ ...c, count: counts.get(c.slug)! }))
-  }, [sizeScoped, def])
+  }, [scoped, sizeFilter, seasonFilter, def])
+
+  const seasonsPresent = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const it of scoped ?? [])
+      if (it.season && (sizeFilter === 'all' || it.size === sizeFilter) && (catFilter === 'all' || it.category === catFilter))
+        counts.set(it.season, (counts.get(it.season) ?? 0) + 1)
+    return SEASONS.filter((s) => counts.has(s.slug)).map((s) => ({ ...s, count: counts.get(s.slug)! }))
+  }, [scoped, sizeFilter, catFilter])
 
   const effectiveSize = sizesPresent.some((s) => s.size === sizeFilter) ? sizeFilter : 'all'
   const effectiveCat = catsPresent.some((c) => c.slug === catFilter) ? catFilter : 'all'
+  const effectiveSeason = seasonsPresent.some((s) => s.slug === seasonFilter) ? seasonFilter : 'all'
+  const sizeAllCount = sizesPresent.reduce((n, s) => n + s.count, 0)
 
-  const visible = useMemo(() => {
-    let its = scoped ?? []
-    if (effectiveSize !== 'all') its = its.filter((it) => it.size === effectiveSize)
-    if (effectiveCat !== 'all') its = its.filter((it) => it.category === effectiveCat)
-    return its
-  }, [scoped, effectiveSize, effectiveCat])
+  const visible = useMemo(
+    () =>
+      (scoped ?? []).filter(
+        (it) =>
+          (effectiveSize === 'all' || it.size === effectiveSize) &&
+          (effectiveCat === 'all' || it.category === effectiveCat) &&
+          (effectiveSeason === 'all' || it.season === effectiveSeason),
+      ),
+    [scoped, effectiveSize, effectiveCat, effectiveSeason],
+  )
 
   if (!scoped) return null
 
@@ -91,7 +103,7 @@ export function Storefront({
       {/* Розміри-бірочки */}
       <div className="flex gap-2 -mx-4 px-4 py-1 overflow-x-auto no-scrollbar">
         <TagChip active={effectiveSize === 'all'} accent={accent} onClick={() => setSizeFilter('all')}>
-          Всі · {catScoped.length}
+          Всі · {sizeAllCount}
         </TagChip>
         {sizesPresent.map(({ size, count }) => (
           <TagChip key={size} active={effectiveSize === size} accent={accent} onClick={() => setSizeFilter(size)}>
@@ -104,11 +116,25 @@ export function Storefront({
       {catsPresent.length > 1 && (
         <div className="flex gap-2 -mx-4 px-4 py-2 overflow-x-auto no-scrollbar">
           <PillChip active={effectiveCat === 'all'} accent={accent} onClick={() => setCatFilter('all')}>
-            Всі
+            Всі типи
           </PillChip>
           {catsPresent.map((c) => (
             <PillChip key={c.slug} active={effectiveCat === c.slug} accent={accent} onClick={() => setCatFilter(c.slug)}>
               {c.label} · {c.count}
+            </PillChip>
+          ))}
+        </div>
+      )}
+
+      {/* Сезони */}
+      {seasonsPresent.length > 1 && (
+        <div className="flex gap-2 -mx-4 px-4 pb-1 overflow-x-auto no-scrollbar">
+          <PillChip active={effectiveSeason === 'all'} accent={accent} onClick={() => setSeasonFilter('all')}>
+            Всі сезони
+          </PillChip>
+          {seasonsPresent.map((s) => (
+            <PillChip key={s.slug} active={effectiveSeason === s.slug} accent={accent} onClick={() => setSeasonFilter(s.slug)}>
+              {s.label} · {s.count}
             </PillChip>
           ))}
         </div>
