@@ -25,14 +25,16 @@ export function Storefront({
   const [catFilter, setCatFilter] = useState('all')
   const [seasonFilter, setSeasonFilter] = useState('all')
 
-  // Grid density (Zara-style): 2 = big · 3 = medium · 4 = small. Remembered.
-  const [cols, setCols] = useState<number>(() => {
-    const v = Number(localStorage.getItem('shafka.gridCols'))
-    return v === 2 || v === 4 ? v : 3
+  // Preview size (Zara-style): the grid auto-fills columns to the width, so a
+  // wide desktop shows many crisp cells and a phone shows a few. The toggle sets
+  // the min cell size — big / medium / small. Remembered.
+  const [cellMin, setCellMin] = useState<number>(() => {
+    const v = Number(localStorage.getItem('shafka.cellMin'))
+    return v === 170 || v === 90 ? v : 120
   })
   useEffect(() => {
-    localStorage.setItem('shafka.gridCols', String(cols))
-  }, [cols])
+    localStorage.setItem('shafka.cellMin', String(cellMin))
+  }, [cellMin])
 
   useEffect(() => {
     setSizeFilter('all')
@@ -152,24 +154,24 @@ export function Storefront({
       {/* Перемикач розміру прев'ю */}
       <div className="flex justify-end gap-1 pt-2">
         {([
-          [2, Grid2x2],
-          [3, Grid3x3],
-          [4, LayoutGrid],
-        ] as const).map(([n, Icon]) => (
+          [170, Grid2x2],
+          [120, Grid3x3],
+          [90, LayoutGrid],
+        ] as const).map(([min, Icon]) => (
           <button
-            key={n}
-            onClick={() => setCols(n)}
-            aria-label={`${n} у ряд`}
+            key={min}
+            onClick={() => setCellMin(min)}
+            aria-label="Розмір прев'ю"
             className="p-1.5 rounded-lg transition-transform active:scale-90"
-            style={{ background: cols === n ? accent : CHIP_BG, color: cols === n ? '#fff' : MUTED }}
+            style={{ background: cellMin === min ? accent : CHIP_BG, color: cellMin === min ? '#fff' : MUTED }}
           >
             <Icon size={16} />
           </button>
         ))}
       </div>
 
-      {/* Сітка-вітрина */}
-      <div className="grid gap-2 pt-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+      {/* Сітка-вітрина — авто-заповнення колонок за шириною екрана */}
+      <div className="grid gap-2 pt-2" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${cellMin}px, 1fr))` }}>
         {visible.map((it) => (
           <button key={it.id} onClick={() => onItemClick(it)} className="text-left transition-transform active:scale-[0.97]">
             <div

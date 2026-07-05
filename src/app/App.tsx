@@ -38,9 +38,9 @@ export function App() {
   }
 
   return (
-    // Mobile-first: cap to phone width and centre on desktop so grid previews
-    // render at their intended size (not upscaled/blurry on a wide screen).
-    <div className="min-h-screen pb-28 mx-auto max-w-[480px]">
+    // Roomy on desktop (shop-like), centred. The grid auto-fills columns to this
+    // width so previews stay crisp; the child switcher stays a comfortable width.
+    <div className="min-h-screen pb-28 mx-auto max-w-[960px]">
       {/* Шапка */}
       <header className="px-4 pt-5 pb-3">
         <div className="flex items-center gap-2">
@@ -67,7 +67,7 @@ export function App() {
         </div>
 
         {/* Перемикач дітей */}
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-4 max-w-[560px]">
           {Object.values(CHILDREN).map((c) => {
             const active = child === c.id
             return (
@@ -113,7 +113,7 @@ export function App() {
       <button
         onClick={() => setShowAdd(true)}
         className="fixed bottom-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90"
-        style={{ background: accent, color: '#fff', right: 'max(1.25rem, calc(50% - 220px))' }}
+        style={{ background: accent, color: '#fff', right: 'max(1.25rem, calc(50% - 460px))' }}
         aria-label="Додати річ"
       >
         <Plus size={28} />
