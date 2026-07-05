@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { CHILDREN, type ChildId, type SectionSlug } from './catalog'
+import { requestSync } from '../features/sync/syncBus'
 
 // Data model per PLAN.md §3. IDs are UUIDs (sync-safe for Phase 4),
 // catalog references are stable slugs, status is an open enum (string).
@@ -97,21 +98,25 @@ export async function addItem(draft: ItemDraft): Promise<Item> {
     updatedAt: now,
   }
   await db.items.add(item)
+  requestSync()
   return item
 }
 
 /** Photo row + item in one transaction — no orphaned blobs if either write fails */
 export async function addItemWithPhoto(draft: ItemDraft, photo?: ProcessedPhoto): Promise<Item> {
   if (!photo) return addItem(draft)
-  return db.transaction('rw', db.items, db.photos, async () => {
+  const item = await db.transaction('rw', db.items, db.photos, async () => {
     const photoId = newId()
     await db.photos.add({ id: photoId, ...photo, createdAt: nowISO() })
     return addItem({ ...draft, photoId })
   })
+  requestSync()
+  return item
 }
 
 export async function updateItem(id: string, patch: Partial<Omit<Item, 'id' | 'createdAt'>>): Promise<void> {
   await db.items.update(id, { ...patch, updatedAt: nowISO() })
+  requestSync()
 }
 
 /** Update an item; when a new photo is supplied, swap the blob atomically */
@@ -128,6 +133,7 @@ export async function updateItemWithPhoto(
     await db.photos.add({ id: photoId, ...photo, createdAt: nowISO() })
     await db.items.update(id, { ...patch, photoId, updatedAt: nowISO() })
   })
+  requestSync()
 }
 
 export async function deleteItem(id: string): Promise<void> {
@@ -136,4 +142,7 @@ export async function deleteItem(id: string): Promise<void> {
     if (item?.photoId) await db.photos.delete(item.photoId)
     await db.items.delete(id)
   })
+  // NB: cloud delete propagation (tombstones) lands in SHA-10; this only
+  // flushes any other pending changes for now.
+  requestSync()
 }

@@ -141,6 +141,22 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   app uses the JS client over HTTPS, so region is irrelevant there). Blocker for
   SHA-8 verify: RLS ties every row to `auth.uid()`, so **SHA-6 sign-in must work first**.
 
+- **2026-07-05** — **Step 2 done (SHA-6)**: email magic-link sign-in verified by VK
+  (person icon tints to accent, shows email). Redirect URLs added in Supabase
+  (localhost:5173, :4173; Site URL = shafka.vercel.app placeholder).
+
+- **2026-07-05** — **SHA-8 (push sync) in progress**: `features/sync/` added —
+  `syncBus.ts` (change signal so `db.ts` nudges sync with no Supabase import/cycle),
+  `sync.ts` `pushChanges()` (watermark `lastPushAt` in settings; uploads children +
+  photos-newer-than-watermark to the `photos` bucket at `<uid>/<id>.jpg` + rows to
+  Postgres; upserts idempotent; on failure the watermark doesn't advance → implicit
+  offline retry queue), `useCloudSync.ts` (runs on sign-in, on each mutation via bus,
+  and on `online`; running/pending guard + 300ms debounce coalesces bursts). `db.ts`
+  mutation helpers call `requestSync()` post-commit; `App` calls `useCloudSync()`.
+  First push on sign-in also uploads all pre-existing local data (covers most of
+  SHA-12). Build green. **Pending verify: add an item on localhost → row in Supabase
+  `items` table + file in `photos` bucket.** Delete propagation still deferred to SHA-10.
+
 ## Next
 
 1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,

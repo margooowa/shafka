@@ -11,6 +11,7 @@ import { Storefront } from '../features/wardrobe/Storefront'
 import { BackupSheet } from '../features/backup/BackupSheet'
 import { AuthSheet } from '../features/auth/AuthSheet'
 import { useAuth } from '../features/auth/useAuth'
+import { useCloudSync } from '../features/sync/useCloudSync'
 
 export function App() {
   const [child, setChild] = useState<ChildId>('daughter')
@@ -20,6 +21,7 @@ export function App() {
   const [showAuth, setShowAuth] = useState(false)
   const [detailId, setDetailId] = useState<string | null>(null)
   const { email } = useAuth()
+  useCloudSync()
   const [toast, setToast] = useState('')
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
