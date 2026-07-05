@@ -43,11 +43,21 @@ export interface Setting {
   value: unknown
 }
 
+// Records a local deletion so it can propagate to the cloud (SHA-10). The item
+// is hard-removed from `items` (UI updates immediately); this remembers what to
+// mark deleted upstream, incl. the photo to clean out of storage.
+export interface Tombstone {
+  id: string
+  photoId: string | null
+  deletedAt: string
+}
+
 export const db = new Dexie('shafka') as Dexie & {
   children: EntityTable<Child, 'id'>
   items: EntityTable<Item, 'id'>
   photos: EntityTable<Photo, 'id'>
   settings: EntityTable<Setting, 'key'>
+  tombstones: EntityTable<Tombstone, 'id'>
 }
 
 db.version(1).stores({
@@ -55,6 +65,15 @@ db.version(1).stores({
   items: 'id, [childId+section], childId, section, category, size, status, createdAt',
   photos: 'id, createdAt',
   settings: 'key',
+})
+
+// v2: tombstones table for delete propagation (SHA-10). Additive — no data rewrite.
+db.version(2).stores({
+  children: 'id, sortOrder',
+  items: 'id, [childId+section], childId, section, category, size, status, createdAt',
+  photos: 'id, createdAt',
+  settings: 'key',
+  tombstones: 'id, deletedAt',
 })
 
 // First-run seed: the two profiles from the catalog
@@ -137,12 +156,12 @@ export async function updateItemWithPhoto(
 }
 
 export async function deleteItem(id: string): Promise<void> {
-  await db.transaction('rw', db.items, db.photos, async () => {
+  await db.transaction('rw', db.items, db.photos, db.tombstones, async () => {
     const item = await db.items.get(id)
     if (item?.photoId) await db.photos.delete(item.photoId)
     await db.items.delete(id)
+    // Remember the deletion so sync can mark it deleted in the cloud (SHA-10).
+    await db.tombstones.put({ id, photoId: item?.photoId ?? null, deletedAt: nowISO() })
   })
-  // NB: cloud delete propagation (tombstones) lands in SHA-10; this only
-  // flushes any other pending changes for now.
   requestSync()
 }

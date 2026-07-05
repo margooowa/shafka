@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Pencil, Trash2 } from 'lucide-react'
-import { db, deleteItem, updateItem } from '../../data/db'
+import { db } from '../../data/db'
+import { editItem, removeItem, writeErrorMessage } from '../sync/writes'
 import { CHILDREN, SEASONS, SECTIONS, STATUSES, sizeLabel } from '../../data/catalog'
 import { CARD_BORDER, CHIP_BG, MUTED } from '../../app/theme'
 import { Sheet } from '../../ui/Sheet'
@@ -31,8 +32,35 @@ export function DetailSheet({
   const item = useLiveQuery(() => db.items.get(itemId), [itemId])
   const [confirmDel, setConfirmDel] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
 
   if (!item) return null
+
+  const toggleStatus = async () => {
+    setBusy(true)
+    setErr('')
+    try {
+      await editItem(item.id, { status: item.status === 'new_with_tag' ? 'wearing' : 'new_with_tag' })
+    } catch (e) {
+      setErr(writeErrorMessage(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const doDelete = async () => {
+    setBusy(true)
+    setErr('')
+    try {
+      await removeItem(item.id)
+      onDeleted()
+    } catch (e) {
+      setErr(writeErrorMessage(e))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const c = CHILDREN[item.childId]
   const def = SECTIONS[item.section]
@@ -75,9 +103,8 @@ export function DetailSheet({
         </button>
 
         <button
-          onClick={() =>
-            void updateItem(item.id, { status: item.status === 'new_with_tag' ? 'wearing' : 'new_with_tag' })
-          }
+          onClick={() => void toggleStatus()}
+          disabled={busy}
           className="w-full rounded-2xl py-3 font-medium text-[15px]"
           style={{ background: c.soft, color: c.accent }}
         >
@@ -87,13 +114,12 @@ export function DetailSheet({
         {confirmDel ? (
           <div className="flex gap-2">
             <button
-              onClick={() => {
-                void deleteItem(item.id).then(onDeleted)
-              }}
+              onClick={() => void doDelete()}
+              disabled={busy}
               className="flex-1 rounded-2xl py-3 font-medium text-white"
               style={{ background: '#C0392B' }}
             >
-              Так, видалити
+              {busy ? 'Видаляю…' : 'Так, видалити'}
             </button>
             <button onClick={() => setConfirmDel(false)} className="flex-1 rounded-2xl py-3 font-medium" style={{ background: CHIP_BG }}>
               Скасувати
@@ -107,6 +133,11 @@ export function DetailSheet({
           >
             <Trash2 size={17} /> Видалити річ
           </button>
+        )}
+        {err && (
+          <p className="text-sm text-center font-medium" style={{ color: '#C0392B' }}>
+            {err}
+          </p>
         )}
       </Sheet>
 

@@ -10,7 +10,8 @@ import {
   type ChildId,
   type SectionSlug,
 } from '../../data/catalog'
-import { addItemWithPhoto, updateItemWithPhoto, db, type Item, type ProcessedPhoto } from '../../data/db'
+import { db, type Item, type ProcessedPhoto } from '../../data/db'
+import { createItem, editItem, writeErrorMessage } from '../sync/writes'
 import { processPhotoFile, rotatePhoto } from '../photos/compress'
 import { MUTED, CARD_BORDER, CHIP_BG, INK } from '../../app/theme'
 import { Field, Sheet } from '../../ui/Sheet'
@@ -69,6 +70,7 @@ export function ItemFormSheet({
         },
   )
   const [busy, setBusy] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [photo, setPhoto] = useState<ProcessedPhoto | null>(null)
   const [photoBusy, setPhotoBusy] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string>()
@@ -127,6 +129,7 @@ export function ItemFormSheet({
   const save = async () => {
     if (!canSave || busy) return
     setBusy(true)
+    setSaveError('')
     try {
       const fields = {
         childId: draft.childId,
@@ -140,11 +143,14 @@ export function ItemFormSheet({
         tags: draft.tags,
       }
       if (item) {
-        await updateItemWithPhoto(item.id, fields, photo ?? undefined)
+        await editItem(item.id, fields, photo ?? undefined)
         onSaved({ ...item, ...fields })
       } else {
-        onSaved(await addItemWithPhoto(fields, photo ?? undefined))
+        onSaved(await createItem(fields, photo ?? undefined))
       }
+    } catch (e) {
+      // Cloud-first: nothing saved locally if the DB write failed.
+      setSaveError(writeErrorMessage(e))
     } finally {
       setBusy(false)
     }
@@ -307,6 +313,11 @@ export function ItemFormSheet({
       {!canSave && (
         <p className="text-xs text-center -mt-1" style={{ color: MUTED }}>
           Обери {showCategories && !draft.category ? 'категорію і ' : ''}розмір
+        </p>
+      )}
+      {saveError && (
+        <p className="text-sm text-center font-medium" style={{ color: '#C0392B' }}>
+          {saveError}
         </p>
       )}
     </Sheet>

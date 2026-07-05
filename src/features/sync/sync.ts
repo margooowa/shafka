@@ -22,6 +22,7 @@ const iso = (t: string) => new Date(t).toISOString()
 export interface PushResult {
   items: number
   photos: number
+  deletes: number
 }
 
 export interface PullResult {
@@ -105,8 +106,25 @@ export async function pushChanges(): Promise<PushResult | null> {
     if (error) throw error
   }
 
+  // Tombstones — mark deleted rows in the cloud and remove their photo files.
+  // UPDATE (not upsert) so an item deleted before it ever pushed is simply a
+  // no-op upstream instead of failing NOT NULL on insert.
+  const tombstones = (await db.tombstones.toArray()).filter((t) => t.deletedAt > since)
+  for (const t of tombstones) {
+    const { error } = await supabase.from('items').update({ deleted: true, updated_at: t.deletedAt }).eq('id', t.id)
+    if (error) throw error
+    if (t.photoId) {
+      await supabase.storage.from('photos').remove([`${userId}/${t.photoId}.jpg`])
+      const { error: pmErr } = await supabase
+        .from('photos_meta')
+        .update({ deleted: true, updated_at: t.deletedAt })
+        .eq('id', t.photoId)
+      if (pmErr) throw pmErr
+    }
+  }
+
   await db.settings.put({ key: LAST_PUSH_KEY, value: startedAt })
-  return { items: items.length, photos: photos.length }
+  return { items: items.length, photos: photos.length, deletes: tombstones.length }
 }
 
 /**

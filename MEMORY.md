@@ -203,6 +203,32 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   email-confirmation OFF in Supabase, or first-user bootstrap). Login password NOT
   recorded here (secret).
 
+- **2026-07-05** — **SHA-10 (delete propagation) in progress**: Dexie **v2** adds a
+  `tombstones` table `{id, photoId, deletedAt}` (additive migration). `deleteItem`
+  hard-removes locally (UI updates now) AND records a tombstone. `pushChanges`
+  processes tombstones with `deletedAt > lastPushAt`: **UPDATE** (not upsert) the
+  cloud item to `deleted:true` (update = no-op if it never pushed, avoids NOT NULL
+  insert failure), removes the storage object, marks `photos_meta` deleted.
+  `pullChanges` already deletes items/photos whose cloud row is `deleted:true`, so a
+  delete on one device removes it on others; no re-propagation loop (pull uses raw
+  `db.items.delete`, not `deleteItem`). Build green. **Pending push+deploy + verify:
+  delete on device A → gone on device B after sync, no ghost re-appears.**
+
+- **2026-07-05** — **DIRECTION CHANGE → cloud-first writes (reverses offline-first).**
+  VK: "delete and upload must not work as local — must sync with DB." New model:
+  add/edit/delete commit to **Supabase first**, and only then update the local Dexie
+  cache; if signed out or offline the write **throws and nothing changes locally**
+  (DB is the single source of truth). **Reads still come from Dexie** (fast, viewable
+  offline) — only writes require the DB. This **drops the "works in a store with no
+  signal" non-negotiable** for writing (VK chose this explicitly). New module
+  `features/sync/writes.ts` (`createItem`/`editItem`/`removeItem`, `requireUser`
+  checks session + `navigator.onLine`, `SyncWriteError` + `writeErrorMessage`).
+  `ItemFormSheet` + `DetailSheet` now call these and show an error on failure
+  (nothing saved). Pull still runs for receiving other devices' changes; the old
+  offline-first push/tombstone path is now dormant (kept for dev/backup reconcile).
+  SHA-10 delete propagation satisfied via cloud-first delete + pull. **SHA-11
+  (offline queue) is now obsolete.** Build green; pending push+deploy + verify.
+
 ## Next
 
 1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,
