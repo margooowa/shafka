@@ -23,6 +23,7 @@ export function AuthSheet({
   const [value, setValue] = useState('')
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
+  const [code, setCode] = useState('')
   const [error, setError] = useState('')
 
   const sendLink = async () => {
@@ -39,6 +40,24 @@ export function AuthSheet({
       setSent(true)
     } catch {
       setError('Не вдалося надіслати лист — перевір адресу та зʼєднання')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Mobile-safe path: verify the 6-digit code from the email instead of
+  // clicking the link (avoids the email-app-browser / cross-browser problem).
+  const verifyCode = async () => {
+    const token = code.trim()
+    if (token.length < 6) return
+    setBusy(true)
+    setError('')
+    try {
+      const { error } = await supabase.auth.verifyOtp({ email: value.trim(), token, type: 'email' })
+      if (error) throw error
+      onDone('Ви увійшли ✓')
+    } catch {
+      setError('Невірний або протермінований код')
     } finally {
       setBusy(false)
     }
@@ -77,18 +96,46 @@ export function AuthSheet({
     )
   }
 
-  // Link sent — check your email
+  // Sent — enter the code (works everywhere, incl. phones) or click the link
   if (sent) {
     return (
-      <Sheet onClose={onClose} title="Перевірте пошту" accent={accent}>
+      <Sheet onClose={onClose} title="Введіть код" accent={accent}>
         <div className="rounded-2xl p-4 text-[15px] space-y-1" style={{ background: '#fff', border: `1px solid ${CARD_BORDER}` }}>
           <p>
-            Посилання для входу надіслано на <b className="break-all">{value.trim()}</b>.
+            Ми надіслали лист на <b className="break-all">{value.trim()}</b>.
           </p>
           <p className="text-sm" style={{ color: MUTED }}>
-            Відкрийте лист на цьому пристрої й натисніть кнопку — ви увійдете автоматично.
+            Відкрийте його й введіть <b>6-значний код</b> сюди. (На комп'ютері можна натомість натиснути посилання в листі.)
           </p>
         </div>
+        <Field label="Код із листа">
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="123456"
+            className="w-full rounded-2xl px-4 py-3 text-[17px] tracking-[0.3em] text-center outline-none"
+            style={{ background: '#fff', border: `1px solid ${CARD_BORDER}` }}
+          />
+        </Field>
+        <button
+          onClick={() => void verifyCode()}
+          disabled={busy || code.trim().length < 6}
+          className="w-full rounded-2xl py-3.5 font-semibold text-white text-[15px]"
+          style={{ background: accent, opacity: busy || code.trim().length < 6 ? 0.6 : 1 }}
+        >
+          {busy ? 'Перевіряю…' : 'Увійти'}
+        </button>
+        <button onClick={() => void sendLink()} disabled={busy} className="w-full text-sm py-1" style={{ color: MUTED }}>
+          Надіслати новий код
+        </button>
+        {error && (
+          <p className="text-sm text-center font-medium" style={{ color: '#C0392B' }}>
+            {error}
+          </p>
+        )}
       </Sheet>
     )
   }

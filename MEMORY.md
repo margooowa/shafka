@@ -173,6 +173,18 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   Build green. **Verify by wiping local IndexedDB (data is safe in cloud) → reload →
   wardrobe rebuilds from cloud; console shows `pull result {items>0}`.**
 
+- **2026-07-05** — **Cloud sync verified end-to-end on PC** via the deployed site.
+  **Deployed:** `https://shafka-alpha.vercel.app` (Marharyta's own Vercel project,
+  imported `margooowa/shafka`, env vars `VITE_SUPABASE_URL` +
+  `VITE_SUPABASE_PUBLISHABLE_KEY` set; auto-deploys on push to `main`). Phase 2 code
+  pushed to `origin/main` (was local-only before deploy). Email friction: Supabase
+  built-in email is rate-limited (429) → guided **Resend** custom SMTP as the fix.
+- **2026-07-05** — **Mobile login bug + fix (SHA-14, in progress)**: magic **link**
+  fails on phones (opens in mail-app in-app browser ≠ initiating browser/PWA). Added
+  **6-digit OTP code** entry to `AuthSheet` (`verifyOtp type:'email'`), link kept for
+  desktop. **Needs dashboard step: Magic Link email template must include
+  `{{ .Token }}`** so the code shows in the email. Build green; pending push+redeploy.
+
 ## Next
 
 1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,
