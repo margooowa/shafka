@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Archive, Plus, Shirt } from 'lucide-react'
+import { Archive, Plus, Shirt, UserRound } from 'lucide-react'
 import { CHILDREN, SECTIONS, SECTION_ORDER, type ChildId, type SectionSlug } from '../data/catalog'
 import { ensurePersistentStorage } from '../data/persistence'
 import { INK, CARD_BORDER, MUTED } from './theme'
@@ -9,13 +9,17 @@ import { ItemFormSheet } from '../features/item/ItemFormSheet'
 import { DetailSheet } from '../features/item/DetailSheet'
 import { Storefront } from '../features/wardrobe/Storefront'
 import { BackupSheet } from '../features/backup/BackupSheet'
+import { AuthSheet } from '../features/auth/AuthSheet'
+import { useAuth } from '../features/auth/useAuth'
 
 export function App() {
   const [child, setChild] = useState<ChildId>('daughter')
   const [section, setSection] = useState<SectionSlug>('clothes')
   const [showAdd, setShowAdd] = useState(false)
   const [showBackup, setShowBackup] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
   const [detailId, setDetailId] = useState<string | null>(null)
+  const { email } = useAuth()
   const [toast, setToast] = useState('')
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
@@ -41,8 +45,16 @@ export function App() {
             Шафка
           </h1>
           <button
-            onClick={() => setShowBackup(true)}
+            onClick={() => setShowAuth(true)}
             className="ml-auto p-2 rounded-full"
+            aria-label="Обліковий запис"
+            style={{ color: email ? accent : MUTED }}
+          >
+            <UserRound size={20} />
+          </button>
+          <button
+            onClick={() => setShowBackup(true)}
+            className="p-2 rounded-full"
             aria-label="Резервна копія"
             style={{ color: MUTED }}
           >
@@ -121,6 +133,18 @@ export function App() {
           onClose={() => setShowBackup(false)}
           onDone={(msg) => {
             setShowBackup(false)
+            showToast(msg)
+          }}
+        />
+      )}
+
+      {showAuth && (
+        <AuthSheet
+          accent={accent}
+          email={email}
+          onClose={() => setShowAuth(false)}
+          onDone={(msg) => {
+            setShowAuth(false)
             showToast(msg)
           }}
         />

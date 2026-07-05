@@ -109,6 +109,16 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   during setup — rotate in Supabase if concerned (app doesn't use it; anon/publishable
   key only).
 
+- **2026-07-05** — **Step 2 in progress (SHA-6)**: email magic-link sign-in built
+  (`src/features/auth/useAuth.ts` session hook — getSession local read, offline-safe;
+  `AuthSheet.tsx` sign-in/sent/signed-in states, UI in Ukrainian; header gets a
+  `UserRound` account button that tints to the child accent when signed in). Not a
+  hard gate — app still opens local-only without login (offline-first preserved);
+  sign-in just establishes the identity sync will use. `signInWithOtp` redirects to
+  `window.location.origin`. Build green. **Pending runtime verify**: user must add
+  redirect URLs in Supabase (localhost:5173, :4173, shafka.vercel.app) then test the
+  email round-trip.
+
 ## Next
 
 1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,
