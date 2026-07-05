@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { LogOut, Mail } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { supabase } from '../../data/supabase'
 import { CARD_BORDER, CHIP_BG, MUTED } from '../../app/theme'
 import { Field, Sheet } from '../../ui/Sheet'
 
 /**
- * Email magic-link sign-in (SHA-6). No password: Supabase emails a one-tap
- * link that redirects back to the app already authenticated. Same email =
- * same account on every device — the identity that owns the synced wardrobe.
+ * Email + password sign-in (SHA-14). Works on every device with no emailed
+ * link/code — sidesteps the mail-app in-app-browser problem on phones. A user
+ * signed in on one device sets a password here; other devices log in with it.
+ * Emailed 6-digit code is kept as a fallback (e.g. first sign-in / lost password).
  */
 export function AuthSheet({
   accent,
@@ -20,13 +21,33 @@ export function AuthSheet({
   onClose: () => void
   onDone: (message: string) => void
 }) {
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState('') // email
+  const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
-  const [code, setCode] = useState('')
   const [error, setError] = useState('')
+  const [ok, setOk] = useState('')
 
-  const sendLink = async () => {
+  const inputStyle = { background: '#fff', border: `1px solid ${CARD_BORDER}` }
+
+  const signIn = async () => {
+    const addr = value.trim()
+    if (!addr || password.length < 6) return
+    setBusy(true)
+    setError('')
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: addr, password })
+      if (error) throw error
+      onDone('Ви увійшли ✓')
+    } catch {
+      setError('Невірний email або пароль. Якщо ви ще не створили пароль — встановіть його на пристрої, де вже увійшли.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const sendCode = async () => {
     const addr = value.trim()
     if (!addr) return
     setBusy(true)
@@ -39,14 +60,12 @@ export function AuthSheet({
       if (error) throw error
       setSent(true)
     } catch {
-      setError('Не вдалося надіслати лист — перевір адресу та зʼєднання')
+      setError('Не вдалося надіслати код — перевір адресу та зʼєднання')
     } finally {
       setBusy(false)
     }
   }
 
-  // Mobile-safe path: verify the 6-digit code from the email instead of
-  // clicking the link (avoids the email-app-browser / cross-browser problem).
   const verifyCode = async () => {
     const token = code.trim()
     if (token.length < 6) return
@@ -63,6 +82,26 @@ export function AuthSheet({
     }
   }
 
+  const savePassword = async () => {
+    if (password.length < 6) {
+      setError('Пароль має містити щонайменше 6 символів')
+      return
+    }
+    setBusy(true)
+    setError('')
+    setOk('')
+    try {
+      const { error } = await supabase.auth.updateUser({ password })
+      if (error) throw error
+      setPassword('')
+      setOk('Пароль збережено. Тепер входьте ним на інших пристроях.')
+    } catch {
+      setError('Не вдалося зберегти пароль')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const signOut = async () => {
     setBusy(true)
     await supabase.auth.signOut()
@@ -70,7 +109,7 @@ export function AuthSheet({
     onDone('Ви вийшли з облікового запису')
   }
 
-  // Signed in — show account + sign out
+  // ── Signed in — account + set password + sign out ──────────────────────
   if (email) {
     return (
       <Sheet onClose={onClose} title="Обліковий запис" accent={accent}>
@@ -80,9 +119,35 @@ export function AuthSheet({
           </p>
           <p className="font-semibold break-all">{email}</p>
         </div>
+
+        <Field label="Пароль для входу на інших пристроях">
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Мінімум 6 символів"
+            className="w-full rounded-2xl px-4 py-3 text-[15px] outline-none"
+            style={inputStyle}
+          />
+        </Field>
+        <button
+          onClick={() => void savePassword()}
+          disabled={busy || password.length < 6}
+          className="w-full rounded-2xl py-3.5 font-semibold text-white text-[15px]"
+          style={{ background: accent, opacity: busy || password.length < 6 ? 0.6 : 1 }}
+        >
+          {busy ? 'Зберігаю…' : 'Зберегти пароль'}
+        </button>
         <p className="text-xs" style={{ color: MUTED }}>
-          Ваша шафка синхронізується між усіма пристроями з цим входом.
+          Встановіть пароль тут, потім на телефоні входьте цим email і паролем — шафка синхронізується.
         </p>
+        {ok && (
+          <p className="text-sm text-center font-medium" style={{ color: accent }}>
+            {ok}
+          </p>
+        )}
+
         <button
           onClick={() => void signOut()}
           disabled={busy}
@@ -92,20 +157,25 @@ export function AuthSheet({
           <LogOut size={18} />
           Вийти
         </button>
+        {error && (
+          <p className="text-sm text-center font-medium" style={{ color: '#C0392B' }}>
+            {error}
+          </p>
+        )}
       </Sheet>
     )
   }
 
-  // Sent — enter the code (works everywhere, incl. phones) or click the link
+  // ── Fallback: emailed 6-digit code ─────────────────────────────────────
   if (sent) {
     return (
       <Sheet onClose={onClose} title="Введіть код" accent={accent}>
         <div className="rounded-2xl p-4 text-[15px] space-y-1" style={{ background: '#fff', border: `1px solid ${CARD_BORDER}` }}>
           <p>
-            Ми надіслали лист на <b className="break-all">{value.trim()}</b>.
+            Ми надіслали код на <b className="break-all">{value.trim()}</b>.
           </p>
           <p className="text-sm" style={{ color: MUTED }}>
-            Відкрийте його й введіть <b>6-значний код</b> сюди. (На комп'ютері можна натомість натиснути посилання в листі.)
+            Введіть <b>6-значний код</b> із листа.
           </p>
         </div>
         <Field label="Код із листа">
@@ -117,7 +187,7 @@ export function AuthSheet({
             onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
             placeholder="123456"
             className="w-full rounded-2xl px-4 py-3 text-[17px] tracking-[0.3em] text-center outline-none"
-            style={{ background: '#fff', border: `1px solid ${CARD_BORDER}` }}
+            style={inputStyle}
           />
         </Field>
         <button
@@ -128,8 +198,8 @@ export function AuthSheet({
         >
           {busy ? 'Перевіряю…' : 'Увійти'}
         </button>
-        <button onClick={() => void sendLink()} disabled={busy} className="w-full text-sm py-1" style={{ color: MUTED }}>
-          Надіслати новий код
+        <button onClick={() => setSent(false)} disabled={busy} className="w-full text-sm py-1" style={{ color: MUTED }}>
+          Назад
         </button>
         {error && (
           <p className="text-sm text-center font-medium" style={{ color: '#C0392B' }}>
@@ -140,13 +210,13 @@ export function AuthSheet({
     )
   }
 
-  // Signed out — email form
+  // ── Signed out — email + password ──────────────────────────────────────
   return (
     <Sheet onClose={onClose} title="Вхід" accent={accent}>
       <p className="text-[15px]" style={{ color: MUTED }}>
-        Увійдіть, щоб синхронізувати шафку між пристроями. Пароль не потрібен — надішлемо посилання на пошту.
+        Увійдіть, щоб синхронізувати шафку між пристроями.
       </p>
-      <Field label="Електронна пошта">
+      <Field label="Пошта">
         <input
           type="email"
           inputMode="email"
@@ -155,17 +225,39 @@ export function AuthSheet({
           onChange={(e) => setValue(e.target.value)}
           placeholder="you@example.com"
           className="w-full rounded-2xl px-4 py-3 text-[15px] outline-none"
-          style={{ background: '#fff', border: `1px solid ${CARD_BORDER}` }}
+          style={inputStyle}
+        />
+      </Field>
+      <Field label="Пароль">
+        <input
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Ваш пароль"
+          className="w-full rounded-2xl px-4 py-3 text-[15px] outline-none"
+          style={inputStyle}
         />
       </Field>
       <button
-        onClick={() => void sendLink()}
-        disabled={busy || !value.trim()}
-        className="w-full rounded-2xl py-3.5 font-semibold text-white text-[15px] flex items-center justify-center gap-2"
-        style={{ background: accent, opacity: busy || !value.trim() ? 0.6 : 1 }}
+        onClick={() => void signIn()}
+        disabled={busy || !value.trim() || password.length < 6}
+        className="w-full rounded-2xl py-3.5 font-semibold text-white text-[15px]"
+        style={{ background: accent, opacity: busy || !value.trim() || password.length < 6 ? 0.6 : 1 }}
       >
-        <Mail size={18} />
-        {busy ? 'Надсилаю…' : 'Надіслати посилання'}
+        {busy ? 'Входжу…' : 'Увійти'}
+      </button>
+
+      <div className="text-center text-xs" style={{ color: MUTED }}>
+        або
+      </div>
+      <button
+        onClick={() => void sendCode()}
+        disabled={busy || !value.trim()}
+        className="w-full rounded-2xl py-3 font-medium text-[15px]"
+        style={{ background: CHIP_BG, opacity: busy || !value.trim() ? 0.6 : 1 }}
+      >
+        Надіслати код на пошту
       </button>
       {error && (
         <p className="text-sm text-center font-medium" style={{ color: '#C0392B' }}>

@@ -184,6 +184,15 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   **6-digit OTP code** entry to `AuthSheet` (`verifyOtp type:'email'`), link kept for
   desktop. **Needs dashboard step: Magic Link email template must include
   `{{ .Token }}`** so the code shows in the email. Build green; pending push+redeploy.
+  **Superseded same day** — Supabase now requires custom SMTP to edit email
+  templates, so the code path needed Resend. VK chose to **switch auth to
+  email + password** instead (SHA-14): no email service / SMTP / templates /
+  dashboard steps, works on every device. `AuthSheet` rewritten:
+  `signInWithPassword` (signed-out), `updateUser({password})` to set a password
+  from a signed-in device, emailed 6-digit code (`verifyOtp`) kept as fallback.
+  No dashboard change needed (existing OTP account already confirmed). **Flow: set
+  a password on the laptop where she's signed in → log in on phone with email+password.**
+  Build green; pending push+redeploy + set-password + phone test.
 
 ## Next
 
