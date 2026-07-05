@@ -134,7 +134,12 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   tombstone; RLS owner-only (`user_id = auth.uid()`); private Storage bucket
   `photos` (full JPEGs at `<user_id>/<photo_id>.jpg`, thumbs regenerated locally on
   pull); per-user updated_at indexes for incremental pull. Re-runnable script.
-  **Pending: user pastes it into the Supabase SQL Editor + verifies tables/bucket.**
+  **Done (SHA-7)** — applied directly against the DB via `pg` from the schema file
+  (verified: 3 tables, `photos` bucket private, owner-only policies on all tables +
+  bucket). **Gotcha: project region is `eu-west-3` (Paris), NOT Frankfurt** — pooler
+  host `aws-0-eu-west-3.pooler.supabase.com` (only relevant for direct DB access; the
+  app uses the JS client over HTTPS, so region is irrelevant there). Blocker for
+  SHA-8 verify: RLS ties every row to `auth.uid()`, so **SHA-6 sign-in must work first**.
 
 ## Next
 
