@@ -193,6 +193,15 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   No dashboard change needed (existing OTP account already confirmed). **Flow: set
   a password on the laptop where she's signed in → log in on phone with email+password.**
   Build green; pending push+redeploy + set-password + phone test.
+  **Deployed** (commit `ec38924`). **Lockout hit:** VK/Marharyta got signed out on all
+  devices before setting a password, and the "set password" UI needs a signed-in
+  session (chicken-and-egg) while emailed OTP was rate-limited. **Recovery:** set the
+  account password directly in `auth.users` via pgcrypto bcrypt (`crypt(pw,
+  gen_salt('bf'))`) over the pooler, at her request; verified with a password-grant
+  call (HTTP 200). She now logs in with email + password. **Follow-up wanted: add a
+  proper sign-up form** so new accounts don't need this workaround (needs
+  email-confirmation OFF in Supabase, or first-user bootstrap). Login password NOT
+  recorded here (secret).
 
 ## Next
 
