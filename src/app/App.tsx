@@ -38,7 +38,9 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen pb-28">
+    // Mobile-first: cap to phone width and centre on desktop so grid previews
+    // render at their intended size (not upscaled/blurry on a wide screen).
+    <div className="min-h-screen pb-28 mx-auto max-w-[480px]">
       {/* Шапка */}
       <header className="px-4 pt-5 pb-3">
         <div className="flex items-center gap-2">
@@ -110,8 +112,8 @@ export function App() {
       {/* Кнопка додавання */}
       <button
         onClick={() => setShowAdd(true)}
-        className="fixed bottom-6 right-5 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90"
-        style={{ background: accent, color: '#fff' }}
+        className="fixed bottom-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90"
+        style={{ background: accent, color: '#fff', right: 'max(1.25rem, calc(50% - 220px))' }}
         aria-label="Додати річ"
       >
         <Plus size={28} />

@@ -14,9 +14,9 @@ export function Sheet({
   children: ReactNode
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end" style={{ background: 'rgba(30,26,20,0.45)' }} onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(30,26,20,0.45)' }} onClick={onClose}>
       <div
-        className="w-full rounded-t-3xl px-4 pt-3 pb-6 space-y-4 overflow-y-auto"
+        className="w-full max-w-[480px] rounded-t-3xl px-4 pt-3 pb-6 space-y-4 overflow-y-auto"
         style={{ background: PAGE_BG, maxHeight: '92vh' }}
         onClick={(e) => e.stopPropagation()}
       >
