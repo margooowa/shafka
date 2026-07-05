@@ -86,6 +86,29 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   flattened Unix-only `.bin` shims (no Windows `.cmd`) → `'tsc' not recognized`;
   ran `npm ci` (375 pkgs, 0 vuln) → `npm run build` green.
 
+- **2026-07-05** — **Linear connected on Marharyta's laptop** (her own
+  `linear.app/shafka`, team **Shafka / SHA**). Board previously held only the 4
+  default Linear onboarding cards (SHA-1…SHA-4) — no real work. **Phase 2 direction
+  chosen: cloud sync so data + photos are reachable from any device.** Backend =
+  **Supabase** (Postgres + Storage buckets + Auth); model = **offline-first**
+  (Dexie stays the local source of truth, background push/pull to Supabase — the
+  zero-signal-in-store guarantee stays intact). Seeded Linear project **"Phase 2 —
+  Cloud Sync (Supabase)"** with 8 step issues **SHA-5…SHA-12** (setup → auth →
+  schema+RLS → push → pull → delete-propagation → sync-status/offline-queue →
+  one-time data migration), each with a verify criterion. **Plan approved.**
+
+- **2026-07-05** — **Step 1 done (SHA-5)**: Supabase project provisioned
+  (`bkxnkwijzttvqmciqbfb.supabase.co`, Central-EU/Frankfurt, dashboard signed in
+  via Marharyta's GitHub). App wired: `@supabase/supabase-js` added; `.env.local`
+  holds `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` (new `sb_publishable_`
+  key format — safe in client; gitignored via `.env.*`); `src/data/supabase.ts`
+  exports the shared client; env typed in `vite-env.d.ts`; dev-only boot check in
+  `main.tsx` (local `auth.getSession()`, no network). `npm run build` green (bundle
+  +~200KB from the client → 550KB, chunk-size warning only, defer code-split).
+  **Next: SHA-6 (email magic-link sign-in).** Note: DB password was shared in chat
+  during setup — rotate in Supabase if concerned (app doesn't use it; anon/publishable
+  key only).
+
 ## Next
 
 1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,
@@ -124,6 +147,8 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
 | 2026-07-04 | Canonical repo moves to `margooowa/shafka` (Marharyta's personal GitHub) | She couldn't access VK's private `kozub88/shafka`; team now works from her repo |
 | 2026-07-04 | Shafka commits use per-repo identity `margooowa <margooowa@ukr.net>` | Laptop's global Git is her work account; personal identity keeps Shafka history attributed to her GitHub without touching work config |
 | 2026-07-05 | Marharyta runs Shafka **fully separate** from VK: own repo, own commit identity, and her **own Linear workspace** (`linear.app/shafka`) — she does NOT join VK's Linear | Her preference for full independence; each tracks their own side |
+| 2026-07-05 | Phase 2 = **cloud sync on Supabase**, **offline-first** (Dexie local cache + background push/pull, last-write-wins by updatedAt, tombstone deletes) | Data/photos must be reachable from any device without breaking the store-with-no-signal guarantee; app already UUID+timestamp ready (PLAN §7) |
+| 2026-07-05 | Kids' photos → **private Storage bucket + RLS**, owner-only account | Privacy of children's images; only the signed-in account reads its own data |
 
 ## Remote
 

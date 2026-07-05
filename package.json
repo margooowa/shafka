@@ -11,6 +11,7 @@
   "dependencies": {
     "@fontsource/rubik": "^5.2.5",
     "@fontsource/unbounded": "^5.2.5",
+    "@supabase/supabase-js": "^2.110.0",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
     "fflate": "^0.8.3",
