@@ -126,8 +126,8 @@ export function Storefront({
         </div>
       )}
 
-      {/* Сезони */}
-      {seasonsPresent.length > 1 && (
+      {/* Сезони — show as soon as any item has a season (many items leave it blank) */}
+      {seasonsPresent.length > 0 && (
         <div className="flex gap-2 -mx-4 px-4 pb-1 overflow-x-auto no-scrollbar">
           <PillChip active={effectiveSeason === 'all'} accent={accent} onClick={() => setSeasonFilter('all')}>
             Всі сезони
