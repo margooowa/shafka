@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Tag } from 'lucide-react'
+import { Grid2x2, Grid3x3, LayoutGrid, Tag } from 'lucide-react'
 import { db, type Item } from '../../data/db'
 import { CHILDREN, SEASONS, SECTIONS, sizeLabel, type ChildId, type SectionSlug } from '../../data/catalog'
-import { CARD_BORDER, MUTED } from '../../app/theme'
+import { CARD_BORDER, CHIP_BG, MUTED } from '../../app/theme'
 import { PillChip, TagChip } from '../../ui/chips'
 import { PhotoView } from '../../ui/PhotoView'
 
@@ -24,6 +24,15 @@ export function Storefront({
   const [sizeFilter, setSizeFilter] = useState('all')
   const [catFilter, setCatFilter] = useState('all')
   const [seasonFilter, setSeasonFilter] = useState('all')
+
+  // Grid density (Zara-style): 2 = big · 3 = medium · 4 = small. Remembered.
+  const [cols, setCols] = useState<number>(() => {
+    const v = Number(localStorage.getItem('shafka.gridCols'))
+    return v === 2 || v === 4 ? v : 3
+  })
+  useEffect(() => {
+    localStorage.setItem('shafka.gridCols', String(cols))
+  }, [cols])
 
   useEffect(() => {
     setSizeFilter('all')
@@ -140,8 +149,27 @@ export function Storefront({
         </div>
       )}
 
+      {/* Перемикач розміру прев'ю */}
+      <div className="flex justify-end gap-1 pt-2">
+        {([
+          [2, Grid2x2],
+          [3, Grid3x3],
+          [4, LayoutGrid],
+        ] as const).map(([n, Icon]) => (
+          <button
+            key={n}
+            onClick={() => setCols(n)}
+            aria-label={`${n} у ряд`}
+            className="p-1.5 rounded-lg transition-transform active:scale-90"
+            style={{ background: cols === n ? accent : CHIP_BG, color: cols === n ? '#fff' : MUTED }}
+          >
+            <Icon size={16} />
+          </button>
+        ))}
+      </div>
+
       {/* Сітка-вітрина */}
-      <div className="grid grid-cols-3 gap-2 pt-2">
+      <div className="grid gap-2 pt-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
         {visible.map((it) => (
           <button key={it.id} onClick={() => onItemClick(it)} className="text-left transition-transform active:scale-[0.97]">
             <div
