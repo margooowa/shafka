@@ -9,8 +9,9 @@ import { PhotoView } from '../../ui/PhotoView'
 
 // Storefront per PLAN §4.2 and reference/shafka.jsx: swing-tag size chips +
 // category pills, both with live counters, only for non-empty values.
-// Picking a size resets the category filter, so every counter always answers
-// "how many items will I see if I tap this".
+// Size and category are independent AND-filters that BOTH persist (pick Штани,
+// then browse 110 → 116 without losing Штани). Each facet's counts reflect the
+// other's current selection, so a chip always answers "how many will I see".
 export function Storefront({
   child,
   section,
@@ -36,31 +37,38 @@ export function Storefront({
   const def = SECTIONS[section]
   const accent = CHILDREN[child].accent
 
+  // Each facet is counted against the OTHER facet's current selection, so the
+  // size chips reflect the chosen category and vice-versa.
+  const catScoped = useMemo(
+    () => (catFilter === 'all' ? (scoped ?? []) : (scoped ?? []).filter((it) => it.category === catFilter)),
+    [scoped, catFilter],
+  )
+  const sizeScoped = useMemo(
+    () => (sizeFilter === 'all' ? (scoped ?? []) : (scoped ?? []).filter((it) => it.size === sizeFilter)),
+    [scoped, sizeFilter],
+  )
+
   const sizesPresent = useMemo(() => {
     const counts = new Map<string, number>()
-    for (const it of scoped ?? []) counts.set(it.size, (counts.get(it.size) ?? 0) + 1)
+    for (const it of catScoped) counts.set(it.size, (counts.get(it.size) ?? 0) + 1)
     return def.sizes.filter((s) => counts.has(s)).map((s) => ({ size: s, count: counts.get(s)! }))
-  }, [scoped, def])
-
-  const effectiveSize = sizesPresent.some((s) => s.size === sizeFilter) ? sizeFilter : 'all'
-
-  const afterSize = useMemo(
-    () => (effectiveSize === 'all' ? (scoped ?? []) : (scoped ?? []).filter((it) => it.size === effectiveSize)),
-    [scoped, effectiveSize],
-  )
+  }, [catScoped, def])
 
   const catsPresent = useMemo(() => {
     const counts = new Map<string, number>()
-    for (const it of afterSize) counts.set(it.category, (counts.get(it.category) ?? 0) + 1)
+    for (const it of sizeScoped) counts.set(it.category, (counts.get(it.category) ?? 0) + 1)
     return def.categories.filter((c) => counts.has(c.slug)).map((c) => ({ ...c, count: counts.get(c.slug)! }))
-  }, [afterSize, def])
+  }, [sizeScoped, def])
 
+  const effectiveSize = sizesPresent.some((s) => s.size === sizeFilter) ? sizeFilter : 'all'
   const effectiveCat = catsPresent.some((c) => c.slug === catFilter) ? catFilter : 'all'
 
-  const visible = useMemo(
-    () => (effectiveCat === 'all' ? afterSize : afterSize.filter((it) => it.category === effectiveCat)),
-    [afterSize, effectiveCat],
-  )
+  const visible = useMemo(() => {
+    let its = scoped ?? []
+    if (effectiveSize !== 'all') its = its.filter((it) => it.size === effectiveSize)
+    if (effectiveCat !== 'all') its = its.filter((it) => it.category === effectiveCat)
+    return its
+  }, [scoped, effectiveSize, effectiveCat])
 
   if (!scoped) return null
 
@@ -82,26 +90,11 @@ export function Storefront({
     <div>
       {/* Розміри-бірочки */}
       <div className="flex gap-2 -mx-4 px-4 py-1 overflow-x-auto no-scrollbar">
-        <TagChip
-          active={effectiveSize === 'all'}
-          accent={accent}
-          onClick={() => {
-            setSizeFilter('all')
-            setCatFilter('all')
-          }}
-        >
-          Всі · {scoped.length}
+        <TagChip active={effectiveSize === 'all'} accent={accent} onClick={() => setSizeFilter('all')}>
+          Всі · {catScoped.length}
         </TagChip>
         {sizesPresent.map(({ size, count }) => (
-          <TagChip
-            key={size}
-            active={effectiveSize === size}
-            accent={accent}
-            onClick={() => {
-              setSizeFilter(size)
-              setCatFilter('all')
-            }}
-          >
+          <TagChip key={size} active={effectiveSize === size} accent={accent} onClick={() => setSizeFilter(size)}>
             {sizeLabel(def, size)} · {count}
           </TagChip>
         ))}
