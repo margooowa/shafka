@@ -157,6 +157,22 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   SHA-12). Build green. **Pending verify: add an item on localhost → row in Supabase
   `items` table + file in `photos` bucket.** Delete propagation still deferred to SHA-10.
 
+- **2026-07-05** — **Step 4 done (SHA-8)**: push verified — items row + photo landed
+  in Supabase. **Bug found & fixed:** cloud `children.id` / `items.child_id` were
+  declared `uuid` but the app keys children by catalog slug ('son'/'daughter') →
+  `22P02 invalid input syntax for type uuid: "daughter"`. Changed both cols to `text`
+  (live DB + `schema.sql`). Item/photo ids stay uuid.
+
+- **2026-07-05** — **SHA-9 (pull sync) in progress**: `pullChanges()` added —
+  fetches children/photos_meta/items changed since `lastPullAt`, merges into Dexie
+  by id with LWW (`updatedAt`, compared via getTime so cloud `+00:00` vs local `Z`
+  formats don't break it; timestamps normalized with `iso()` on store), downloads
+  photo blobs not held locally and regenerates the thumb via `thumbFor`, honours
+  `deleted` tombstones. `useCloudSync` rewritten: pull+push on sign-in / tab focus /
+  reconnect, push on mutations (debounced); single-flight cycle w/ rerun flag.
+  Build green. **Verify by wiping local IndexedDB (data is safe in cloud) → reload →
+  wardrobe rebuilds from cloud; console shows `pull result {items>0}`.**
+
 ## Next
 
 1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,
