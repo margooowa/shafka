@@ -7,7 +7,7 @@ const THUMB_MAX = 240
 const FULL_QUALITY = 0.72
 const THUMB_QUALITY = 0.7
 
-type Decoded = ImageBitmap | HTMLImageElement
+type Decoded = ImageBitmap | HTMLImageElement | HTMLCanvasElement
 
 // createImageBitmap applies EXIF orientation ('from-image' is the spec default,
 // stated explicitly for older Chrome); <img> fallback for browsers without it.
@@ -58,6 +58,35 @@ export async function thumbFor(full: Blob): Promise<Blob> {
   const src = await decode(full)
   try {
     return await toJpeg(drawScaled(src, THUMB_MAX).canvas, THUMB_QUALITY)
+  } finally {
+    if ('close' in src) src.close()
+  }
+}
+
+/**
+ * Rotate a stored full-size JPEG 90° clockwise and regenerate full + thumb.
+ * Works on the compressed ~700px copy (the original is long gone by now);
+ * one extra encode per turn, negligible at catalog quality.
+ */
+export async function rotatePhoto(full: Blob): Promise<ProcessedPhoto> {
+  const src = await decode(full)
+  try {
+    const { w, h } = sourceSize(src)
+    const rotated = document.createElement('canvas')
+    rotated.width = h
+    rotated.height = w
+    const ctx = rotated.getContext('2d')!
+    ctx.translate(h, 0)
+    ctx.rotate(Math.PI / 2)
+    ctx.drawImage(src, 0, 0)
+    // rotated is already within FULL_MAX; drawScaled just re-encodes the full copy
+    const fullOut = drawScaled(rotated, FULL_MAX)
+    const thumbOut = drawScaled(rotated, THUMB_MAX)
+    const [fullBlob, thumbBlob] = await Promise.all([
+      toJpeg(fullOut.canvas, FULL_QUALITY),
+      toJpeg(thumbOut.canvas, THUMB_QUALITY),
+    ])
+    return { full: fullBlob, thumb: thumbBlob, width: fullOut.width, height: fullOut.height }
   } finally {
     if ('close' in src) src.close()
   }

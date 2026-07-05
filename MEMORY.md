@@ -119,6 +119,15 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   redirect URLs in Supabase (localhost:5173, :4173, shafka.vercel.app) then test the
   email round-trip.
 
+- **2026-07-05** — **SHA-13 (photo rotate) in progress** — standalone Phase-1 UX
+  fix, not part of the cloud-sync epic. `rotatePhoto(full)` added to
+  `features/photos/compress.ts` (redraws the stored ~700px JPEG on a 90°-rotated
+  canvas, regenerates full+thumb; `Decoded` type broadened to accept a canvas
+  source). `ItemFormSheet` gets a «Повернути» chip below the photo (shown when a
+  photo is present); rotates the just-added photo or loads an existing item's full
+  blob from Dexie and rotates that, swapping on save. Build green, live on dev via
+  HMR. **Pending user visual verify.**
+
 ## Next
 
 1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,

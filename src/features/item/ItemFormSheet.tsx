@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera } from 'lucide-react'
+import { Camera, RotateCw } from 'lucide-react'
 import {
   CHILDREN,
   SEASONS,
@@ -10,9 +10,9 @@ import {
   type ChildId,
   type SectionSlug,
 } from '../../data/catalog'
-import { addItemWithPhoto, updateItemWithPhoto, type Item, type ProcessedPhoto } from '../../data/db'
-import { processPhotoFile } from '../photos/compress'
-import { MUTED, CARD_BORDER } from '../../app/theme'
+import { addItemWithPhoto, updateItemWithPhoto, db, type Item, type ProcessedPhoto } from '../../data/db'
+import { processPhotoFile, rotatePhoto } from '../photos/compress'
+import { MUTED, CARD_BORDER, CHIP_BG, INK } from '../../app/theme'
 import { Field, Sheet } from '../../ui/Sheet'
 import { PillChip, TagChip } from '../../ui/chips'
 import { PhotoView } from '../../ui/PhotoView'
@@ -96,6 +96,20 @@ export function ItemFormSheet({
     }
   }
 
+  // Rotate 90° — the just-added photo, or an existing item's stored photo
+  const rotate = async () => {
+    if (photoBusy) return
+    setPhotoBusy(true)
+    try {
+      const base = photo?.full ?? (item?.photoId ? (await db.photos.get(item.photoId))?.full : undefined)
+      if (base) setPhoto(await rotatePhoto(base))
+    } catch {
+      /* keep current photo on failure */
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
+
   const accent = CHILDREN[draft.childId].accent
   const sectionDef = SECTIONS[draft.section]
   const showCategories = sectionDef.categories.length > 1
@@ -170,6 +184,17 @@ export function ItemFormSheet({
         <p className="text-xs text-center -mt-2" style={{ color: MUTED }}>
           Торкнись фото, щоб замінити
         </p>
+      )}
+      {(photo || item?.photoId) && (
+        <button
+          onClick={() => void rotate()}
+          disabled={photoBusy}
+          className="w-fit mx-auto flex items-center gap-1.5 text-sm rounded-full px-3.5 py-1.5 transition-transform active:scale-95"
+          style={{ background: CHIP_BG, color: INK }}
+        >
+          <RotateCw size={16} />
+          {photoBusy ? 'Обробляю…' : 'Повернути'}
+        </button>
       )}
 
       <Field label="Чия річ">
