@@ -117,17 +117,24 @@ export async function cropPhoto(
     const bw = Math.max(0.02, Math.min(1 - bx, box.w))
     const bh = Math.max(0.02, Math.min(1 - by, box.h))
     // Pixel-space box, padded ~10% and expanded to a square around its centre.
+    // Not clamped to the screenshot's own bounds: a tall/narrow item (pants, a
+    // dress) can be taller than the screenshot is wide, so the square is
+    // padded with white beyond the source edges instead of shrinking to fit —
+    // otherwise the item's ends get silently cropped out of the stored photo.
     const cx = (bx + bw / 2) * iw
     const cy = (by + bh / 2) * ih
-    const side = Math.min(Math.max(bw * iw, bh * ih) * 1.1, Math.min(iw, ih))
-    const sx = Math.round(Math.max(0, Math.min(iw - side, cx - side / 2)))
-    const sy = Math.round(Math.max(0, Math.min(ih - side, cy - side / 2)))
+    const side = Math.max(bw * iw, bh * ih) * 1.1
+    const sx = Math.round(cx - side / 2)
+    const sy = Math.round(cy - side / 2)
     const sw = Math.max(1, Math.round(side))
     const sh = sw
     const canvas = document.createElement('canvas')
     canvas.width = sw
     canvas.height = sh
-    canvas.getContext('2d')!.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh)
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, sw, sh)
+    ctx.drawImage(src, -sx, -sy)
     const fullOut = drawScaled(canvas, FULL_MAX)
     const thumbOut = drawScaled(canvas, THUMB_MAX)
     const [fullBlob, thumbBlob] = await Promise.all([

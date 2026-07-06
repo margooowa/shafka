@@ -77,7 +77,7 @@ export default async function handler(req: any, res: any) {
       .join('\n')
     const seasonText = seasonList.map((s) => `${s.slug}=${s.label}`).join(', ')
 
-    const prompt = `Identify EVERY distinct wearable item (clothing, footwear, accessory) shown in this screenshot from an online shop. Classify each using ONLY the provided slugs, and give a tight bounding box for each.
+    const prompt = `Identify EVERY distinct wearable item (clothing, footwear, accessory) shown in this screenshot from an online shop. Classify each using ONLY the provided slugs, and give a bounding box for each.
 
 Sections and their categories:
 ${catalogText}
@@ -93,7 +93,7 @@ For each item return:
 - size: only if a size is clearly shown as text near the item; otherwise empty string.
 - note: a short Ukrainian note (brand/pattern/material) or empty string.
 - confidence: your confidence in the category.
-- box: {x, y, w, h} as FRACTIONS of the image (x,y = top-left corner; w,h = width/height; all between 0 and 1) tightly around the item.
+- box: {x, y, w, h} as FRACTIONS of the image (x,y = top-left corner; w,h = width/height; all between 0 and 1). Must fully enclose the ENTIRE garment/item — every edge (collar to hem, waist to ankle, etc.), not just its most visible or decorated part. Only shrink the box where the item is genuinely cut off by the photo itself or hidden behind another item.
 
 Ignore human faces, backgrounds, prices, and logos — only actual wearable products. If there is only one item, return a single-element list.`
 
