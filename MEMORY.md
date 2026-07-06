@@ -238,6 +238,20 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   poll (60s + on focus) so deploys self-refresh — one final manual cache-clear needed
   to adopt the fix, automatic after. All deployed to shafka-alpha.vercel.app.
 
+- **2026-07-06** — **Phase 2 (AI recognition) built (SHA-19).** Screenshot → Claude
+  vision → suggested item → user approves. Decision: **Anthropic API, model
+  `claude-opus-4-8`** (VK's pick; ChatGPT *subscription* can't be used — API access
+  is separate metered billing; ~1–2¢/scan). Key handling: **Vercel serverless
+  function `api/recognize.ts`** holds `ANTHROPIC_API_KEY` (server-only env var, NO
+  `VITE_` prefix — never reaches browser); `@anthropic-ai/sdk` added (used only by
+  the function; app's `tsc` excludes `/api` via `tsconfig.app.json` include:["src"]).
+  Function uses `output_config.format` json_schema constrained to catalog slugs.
+  Client: `features/ai/recognize.ts` (base64 `photo.full` → POST /api/recognize);
+  header **ScanLine** button → image picker → `ItemFormSheet` gains `suggested` +
+  `initialPhoto` props (exported `Draft` type) → pre-filled add form, screenshot
+  becomes the photo. Build green. **Pending: user added key to Vercel env, then
+  push+deploy+test on shafka-alpha.vercel.app** (Vercel auto-builds `/api` functions).
+
 ## Next
 
 1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,

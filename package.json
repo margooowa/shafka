@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@fontsource/rubik": "^5.2.5",
     "@fontsource/unbounded": "^5.2.5",
     "@supabase/supabase-js": "^2.110.0",

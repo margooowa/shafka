@@ -18,7 +18,7 @@ import { Field, Sheet } from '../../ui/Sheet'
 import { PillChip, TagChip } from '../../ui/chips'
 import { PhotoView } from '../../ui/PhotoView'
 
-interface Draft {
+export interface Draft {
   childId: ChildId
   section: SectionSlug
   category: string
@@ -30,48 +30,56 @@ interface Draft {
   tags: string[]
 }
 
-// One form for both flows: no `item` = add, `item` = edit (prefilled, photo swappable)
+// One form for three flows: no `item` = add; `item` = edit (prefilled, photo
+// swappable); `suggested` + `initialPhoto` = AI pre-fill (add, user reviews).
 export function ItemFormSheet({
   item,
   defaultChild,
   defaultSection,
+  suggested,
+  initialPhoto,
   onClose,
   onSaved,
 }: {
   item?: Item
   defaultChild: ChildId
   defaultSection: SectionSlug
+  suggested?: Partial<Draft>
+  initialPhoto?: ProcessedPhoto | null
   onClose: () => void
   onSaved: (item: Item) => void
 }) {
-  const [draft, setDraft] = useState<Draft>(() =>
-    item
-      ? {
-          childId: item.childId,
-          section: item.section,
-          category: item.category,
-          size: item.size,
-          season: item.season ?? '',
-          color: item.color ?? '',
-          note: item.note ?? '',
-          status: item.status,
-          tags: item.tags,
-        }
-      : {
-          childId: defaultChild,
-          section: defaultSection,
-          category: defaultSection === 'shoes' ? 'shoes' : '',
-          size: '',
-          season: '',
-          color: '',
-          note: '',
-          status: 'new_with_tag',
-          tags: [],
-        },
-  )
+  const [draft, setDraft] = useState<Draft>(() => {
+    if (item) {
+      return {
+        childId: item.childId,
+        section: item.section,
+        category: item.category,
+        size: item.size,
+        season: item.season ?? '',
+        color: item.color ?? '',
+        note: item.note ?? '',
+        status: item.status,
+        tags: item.tags,
+      }
+    }
+    // AI suggestion (if any) seeds the add form; user can change anything.
+    const section = suggested?.section && SECTIONS[suggested.section] ? suggested.section : defaultSection
+    return {
+      childId: defaultChild,
+      section,
+      category: suggested?.category ?? (section === 'shoes' ? 'shoes' : ''),
+      size: suggested?.size ?? '',
+      season: suggested?.season ?? '',
+      color: suggested?.color ?? '',
+      note: suggested?.note ?? '',
+      status: suggested?.status ?? 'new_with_tag',
+      tags: suggested?.tags ?? [],
+    }
+  })
   const [busy, setBusy] = useState(false)
   const [saveError, setSaveError] = useState('')
-  const [photo, setPhoto] = useState<ProcessedPhoto | null>(null)
+  const [photo, setPhoto] = useState<ProcessedPhoto | null>(initialPhoto ?? null)
   const [photoBusy, setPhotoBusy] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string>()
   const fileRef = useRef<HTMLInputElement>(null)

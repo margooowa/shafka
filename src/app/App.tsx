@@ -1,17 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
-import { Archive, Plus, Shirt, UserRound } from 'lucide-react'
+import { Archive, Plus, ScanLine, Shirt, UserRound } from 'lucide-react'
 import { CHILDREN, SECTIONS, SECTION_ORDER, type ChildId, type SectionSlug } from '../data/catalog'
+import type { ProcessedPhoto } from '../data/db'
 import { ensurePersistentStorage } from '../data/persistence'
 import { INK, CARD_BORDER, MUTED } from './theme'
 import { PillChip } from '../ui/chips'
 import { DebugPanel } from './DebugPanel'
-import { ItemFormSheet } from '../features/item/ItemFormSheet'
+import { ItemFormSheet, type Draft } from '../features/item/ItemFormSheet'
 import { DetailSheet } from '../features/item/DetailSheet'
 import { Storefront } from '../features/wardrobe/Storefront'
 import { BackupSheet } from '../features/backup/BackupSheet'
 import { AuthSheet } from '../features/auth/AuthSheet'
 import { useAuth } from '../features/auth/useAuth'
 import { useCloudSync } from '../features/sync/useCloudSync'
+import { recognizeItem, RecognizeError } from '../features/ai/recognize'
+import { processPhotoFile } from '../features/photos/compress'
 
 export function App() {
   const [child, setChild] = useState<ChildId>('daughter')
@@ -25,6 +28,12 @@ export function App() {
   const [toast, setToast] = useState('')
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
+  // AI recognition (Phase 2): screenshot → suggestion → review in the add form.
+  const aiFileRef = useRef<HTMLInputElement>(null)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiPhoto, setAiPhoto] = useState<ProcessedPhoto | null>(null)
+  const [aiSuggested, setAiSuggested] = useState<Partial<Draft> | null>(null)
+
   useEffect(() => {
     void ensurePersistentStorage()
   }, [])
@@ -35,6 +44,34 @@ export function App() {
     clearTimeout(toastTimer.current)
     setToast(msg)
     toastTimer.current = setTimeout(() => setToast(''), 2200)
+  }
+
+  const handleAiFile = async (file: File | undefined) => {
+    if (!file || aiBusy) return
+    setAiBusy(true)
+    try {
+      const photo = await processPhotoFile(file)
+      const s = await recognizeItem(photo)
+      const sectionSlug = SECTIONS[s.section as SectionSlug] ? (s.section as SectionSlug) : undefined
+      setAiPhoto(photo)
+      setAiSuggested({
+        section: sectionSlug,
+        category: s.category || undefined,
+        size: s.size || undefined,
+        season: s.season || undefined,
+        color: s.color || undefined,
+        note: s.note || undefined,
+        status: 'new_with_tag',
+      })
+    } catch (e) {
+      showToast(
+        e instanceof RecognizeError && e.message === 'no-key'
+          ? 'AI ще не налаштовано'
+          : 'Не вдалося розпізнати — спробуйте ще раз',
+      )
+    } finally {
+      setAiBusy(false)
+    }
   }
 
   return (
@@ -48,9 +85,28 @@ export function App() {
           <h1 className="font-display" style={{ fontWeight: 600, fontSize: 20, letterSpacing: '-0.02em' }}>
             Шафка
           </h1>
+          <input
+            ref={aiFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              void handleAiFile(e.target.files?.[0])
+              e.target.value = ''
+            }}
+          />
+          <button
+            onClick={() => aiFileRef.current?.click()}
+            disabled={aiBusy}
+            className="ml-auto p-2 rounded-full"
+            aria-label="Розпізнати зі скріншота"
+            style={{ color: accent }}
+          >
+            <ScanLine size={20} />
+          </button>
           <button
             onClick={() => setShowAuth(true)}
-            className="ml-auto p-2 rounded-full"
+            className="p-2 rounded-full"
             aria-label="Обліковий запис"
             style={{ color: email ? accent : MUTED }}
           >
@@ -131,6 +187,24 @@ export function App() {
         />
       )}
 
+      {aiSuggested && (
+        <ItemFormSheet
+          defaultChild={child}
+          defaultSection={section}
+          suggested={aiSuggested}
+          initialPhoto={aiPhoto}
+          onClose={() => {
+            setAiSuggested(null)
+            setAiPhoto(null)
+          }}
+          onSaved={() => {
+            setAiSuggested(null)
+            setAiPhoto(null)
+            showToast('Додано в шафку ✓')
+          }}
+        />
+      )}
+
       {showBackup && (
         <BackupSheet
           accent={accent}
@@ -167,6 +241,18 @@ export function App() {
       )}
 
       {import.meta.env.DEV && <DebugPanel child={child} section={section} />}
+
+      {aiBusy && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: 'rgba(30,26,20,0.45)' }}>
+          <div
+            className="rounded-2xl px-5 py-4 text-[15px] font-medium shadow-lg flex items-center gap-3"
+            style={{ background: '#fff', color: INK }}
+          >
+            <ScanLine size={20} className="animate-pulse" style={{ color: accent }} />
+            Розпізнаю зі скріншота…
+          </div>
+        </div>
+      )}
 
       {/* Тост */}
       {toast && (
