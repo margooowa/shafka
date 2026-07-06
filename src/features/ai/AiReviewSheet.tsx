@@ -8,7 +8,7 @@ import {
   type SectionSlug,
 } from '../../data/catalog'
 import { createItem, writeErrorMessage } from '../sync/writes'
-import { CARD_BORDER, MUTED } from '../../app/theme'
+import { CARD_BORDER, MUTED, PAGE_BG } from '../../app/theme'
 import { Sheet } from '../../ui/Sheet'
 import { PillChip, TagChip } from '../../ui/chips'
 import type { RecognizedItem } from './recognize'
@@ -108,46 +108,56 @@ export function AiReviewSheet({
         const def = SECTIONS[r.section]
         const showCats = def.categories.length > 1
         return (
-          <div key={i} className="rounded-2xl p-3 space-y-2" style={{ background: '#fff', border: `1px solid ${CARD_BORDER}`, opacity: r.include ? 1 : 0.55 }}>
-            <div className="flex items-center gap-3">
-              <img src={urls[i]} alt="" className="w-16 h-16 rounded-xl object-cover" style={{ border: `1px solid ${CARD_BORDER}` }} />
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-[15px] truncate">
-                  {catLabel(r.section, r.category) ?? r.item.label ?? 'Річ'}
-                </p>
-                <p className="text-xs truncate" style={{ color: MUTED }}>
+          <div
+            key={i}
+            className="rounded-2xl overflow-hidden"
+            style={{ background: '#fff', border: `1px solid ${CARD_BORDER}`, opacity: r.include ? 1 : 0.5 }}
+          >
+            {/* Full crop, contained (never chops the garment) */}
+            <div className="relative" style={{ background: PAGE_BG }}>
+              <img src={urls[i]} alt="" className="w-full max-h-44 object-contain" />
+              <button
+                onClick={() => setRow(i, { include: !r.include })}
+                aria-label="Додати цю річ"
+                className="absolute top-2 right-2 rounded-full p-0.5"
+                style={{ background: '#fff', color: r.include ? accent : MUTED, boxShadow: '0 1px 5px rgba(0,0,0,0.18)' }}
+              >
+                {r.include ? <CheckCircle2 size={28} /> : <Circle size={28} />}
+              </button>
+            </div>
+            <div className="p-3 space-y-2">
+              <div>
+                <p className="font-medium text-[15px]">{catLabel(r.section, r.category) ?? r.item.label ?? 'Річ'}</p>
+                <p className="text-xs" style={{ color: MUTED }}>
                   {[r.item.color, r.item.season].filter(Boolean).join(' · ') || '—'}
                 </p>
               </div>
-              <button onClick={() => setRow(i, { include: !r.include })} aria-label="Додати цю річ" style={{ color: r.include ? accent : MUTED }}>
-                {r.include ? <CheckCircle2 size={26} /> : <Circle size={26} />}
-              </button>
+
+              {r.include && showCats && (
+                <div className="flex gap-1.5 flex-wrap">
+                  {def.categories.map((c) => (
+                    <PillChip key={c.slug} active={r.category === c.slug} accent={accent} onClick={() => setRow(i, { category: c.slug })}>
+                      {c.label}
+                    </PillChip>
+                  ))}
+                </div>
+              )}
+
+              {r.include && (
+                <div className="flex gap-1.5 flex-wrap">
+                  {def.sizes.map((s) => (
+                    <TagChip key={s} active={r.size === s} accent={accent} onClick={() => setRow(i, { size: s })}>
+                      {sizeLabel(def, s)}
+                    </TagChip>
+                  ))}
+                </div>
+              )}
+              {r.include && !r.size && (
+                <p className="text-xs" style={{ color: MUTED }}>
+                  Обери розмір, щоб додати
+                </p>
+              )}
             </div>
-
-            {r.include && showCats && (
-              <div className="flex gap-1.5 flex-wrap">
-                {def.categories.map((c) => (
-                  <PillChip key={c.slug} active={r.category === c.slug} accent={accent} onClick={() => setRow(i, { category: c.slug })}>
-                    {c.label}
-                  </PillChip>
-                ))}
-              </div>
-            )}
-
-            {r.include && (
-              <div className="flex gap-1.5 flex-wrap">
-                {def.sizes.map((s) => (
-                  <TagChip key={s} active={r.size === s} accent={accent} onClick={() => setRow(i, { size: s })}>
-                    {sizeLabel(def, s)}
-                  </TagChip>
-                ))}
-              </div>
-            )}
-            {r.include && !r.size && (
-              <p className="text-xs" style={{ color: MUTED }}>
-                Обери розмір, щоб додати
-              </p>
-            )}
           </div>
         )
       })}
