@@ -97,6 +97,13 @@ export async function rotatePhoto(full: Blob): Promise<ProcessedPhoto> {
  * Crop a region out of a full-size JPEG and produce a fresh full+thumb pair.
  * `box` is fractional (x,y = top-left, w,h = size, all 0..1) — used by AI
  * recognition to give each detected item its own photo from one screenshot.
+ *
+ * The storefront grid deliberately shows tiles as object-cover squares (see
+ * reference/shafka.jsx), so a tall/narrow AI box (e.g. pants, a dress) would
+ * get its ends chopped off to fill the square. Padding the box to a square
+ * here — once, at the source — means every downstream view (grid tile,
+ * detail card) gets a photo that already matches its shape; no content is
+ * ever cropped a second time.
  */
 export async function cropPhoto(
   full: Blob,
@@ -109,10 +116,14 @@ export async function cropPhoto(
     const by = Math.max(0, Math.min(1, box.y))
     const bw = Math.max(0.02, Math.min(1 - bx, box.w))
     const bh = Math.max(0.02, Math.min(1 - by, box.h))
-    const sx = Math.round(bx * iw)
-    const sy = Math.round(by * ih)
-    const sw = Math.max(1, Math.round(bw * iw))
-    const sh = Math.max(1, Math.round(bh * ih))
+    // Pixel-space box, padded ~10% and expanded to a square around its centre.
+    const cx = (bx + bw / 2) * iw
+    const cy = (by + bh / 2) * ih
+    const side = Math.min(Math.max(bw * iw, bh * ih) * 1.1, Math.min(iw, ih))
+    const sx = Math.round(Math.max(0, Math.min(iw - side, cx - side / 2)))
+    const sy = Math.round(Math.max(0, Math.min(ih - side, cy - side / 2)))
+    const sw = Math.max(1, Math.round(side))
+    const sh = sw
     const canvas = document.createElement('canvas')
     canvas.width = sw
     canvas.height = sh

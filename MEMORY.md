@@ -261,6 +261,18 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   sheet. Single-item `suggested`/`initialPhoto` props on ItemFormSheet kept but
   unused by AI path now. Build green. **Pending push+deploy+test.**
 
+- **2026-07-06** — **Bug fix (SHA-19 follow-up): AI-cropped photos looked bad in
+  the storefront grid.** Root cause: `cropPhoto` cropped the AI's tight bounding
+  box as-is (often tall/narrow — pants, dresses), but the grid tile is a deliberate
+  `object-cover` square (per `reference/shafka.jsx`), so a non-square photo got its
+  ends chopped off to fill the square. Fixed at the source in `compress.ts`:
+  `cropPhoto` now pads the box to a square (centred on the detected box, ~10%
+  breathing room, clamped to image bounds) before cropping, so the stored photo is
+  already square — no view ever has to crop it again. Verified in-browser: seeded a
+  test item via a synthetic tall crop box (console, throwaway dev origin, no real
+  data touched) — output photo came back square (748×748 full, 320×320 thumb) and
+  the grid tile showed the full garment with no cut-off edges. Build green.
+
 ## Next
 
 **Status (2026-07-06): shipped & live at https://shafka-alpha.vercel.app** (Marharyta's
