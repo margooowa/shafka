@@ -1,20 +1,33 @@
+import { cropPhoto, processPhotoFile } from '../photos/compress'
 import type { ProcessedPhoto } from '../../data/db'
-import { SECTIONS, SECTION_ORDER, SEASONS, STATUSES } from '../../data/catalog'
+import { SECTIONS, SECTION_ORDER, SEASONS } from '../../data/catalog'
 
-// Client side of AI recognition (Phase 2). Sends the compressed screenshot to
-// our serverless /api/recognize function (which holds the secret key) and gets
-// back a structured suggestion for the item form. Nothing is saved here — the
-// user reviews and approves in the normal Add-item form.
+// Client side of AI recognition (Phase 2). Sends a screenshot to our serverless
+// /api/recognize function (which holds the secret key), gets back a list of
+// detected items with bounding boxes, and crops each into its own photo. Nothing
+// is saved here — the user reviews and approves in the AI review sheet.
 
-export interface Suggestion {
+export interface Box {
+  x: number
+  y: number
+  w: number
+  h: number
+}
+export interface Detected {
+  label: string
   section: string
   category: string
   color: string
   season: string
-  status: string
   size: string
   note: string
   confidence: 'high' | 'medium' | 'low'
+  box: Box
+}
+
+/** A detected item with its cropped photo ready for the form. */
+export interface RecognizedItem extends Detected {
+  photo: ProcessedPhoto
 }
 
 /** 'no-key' → server has no ANTHROPIC_API_KEY; 'failed' → anything else. */
@@ -32,8 +45,15 @@ function blobToBase64(blob: Blob): Promise<string> {
   })
 }
 
-export async function recognizeItem(photo: ProcessedPhoto): Promise<Suggestion> {
-  const imageBase64 = await blobToBase64(photo.full)
+/**
+ * Compress the screenshot, ask Claude to find every item, and crop each one.
+ * Returns the recognized items (each with its own cropped photo), newest boxes
+ * first is not meaningful — order follows the model.
+ */
+export async function recognizeScreenshot(file: File): Promise<RecognizedItem[]> {
+  const screenshot = await processPhotoFile(file)
+  const imageBase64 = await blobToBase64(screenshot.full)
+
   const sections = SECTION_ORDER.map((slug) => ({
     slug,
     label: SECTIONS[slug].label,
@@ -50,7 +70,6 @@ export async function recognizeItem(photo: ProcessedPhoto): Promise<Suggestion> 
         mediaType: 'image/jpeg', // processPhotoFile always outputs JPEG
         sections,
         seasons: SEASONS.map((s) => ({ slug: s.slug, label: s.label })),
-        statuses: STATUSES.map((s) => ({ slug: s.slug, label: s.label })),
       }),
     })
   } catch {
@@ -62,6 +81,19 @@ export async function recognizeItem(photo: ProcessedPhoto): Promise<Suggestion> 
     throw new RecognizeError(body?.error === 'auth' ? 'no-key' : 'failed')
   }
   const data = await res.json().catch(() => null)
-  if (!data?.suggestion) throw new RecognizeError('failed')
-  return data.suggestion as Suggestion
+  const detected: Detected[] = Array.isArray(data?.items) ? data.items : []
+  if (!detected.length) return []
+
+  // Crop each detected item out of the screenshot into its own photo.
+  const items: RecognizedItem[] = []
+  for (const d of detected.slice(0, 12)) {
+    try {
+      const photo = await cropPhoto(screenshot.full, d.box)
+      items.push({ ...d, photo })
+    } catch {
+      // Fallback: use the whole screenshot if the crop fails.
+      items.push({ ...d, photo: screenshot })
+    }
+  }
+  return items
 }

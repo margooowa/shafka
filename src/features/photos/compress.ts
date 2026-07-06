@@ -93,6 +93,42 @@ export async function rotatePhoto(full: Blob): Promise<ProcessedPhoto> {
   }
 }
 
+/**
+ * Crop a region out of a full-size JPEG and produce a fresh full+thumb pair.
+ * `box` is fractional (x,y = top-left, w,h = size, all 0..1) — used by AI
+ * recognition to give each detected item its own photo from one screenshot.
+ */
+export async function cropPhoto(
+  full: Blob,
+  box: { x: number; y: number; w: number; h: number },
+): Promise<ProcessedPhoto> {
+  const src = await decode(full)
+  try {
+    const { w: iw, h: ih } = sourceSize(src)
+    const bx = Math.max(0, Math.min(1, box.x))
+    const by = Math.max(0, Math.min(1, box.y))
+    const bw = Math.max(0.02, Math.min(1 - bx, box.w))
+    const bh = Math.max(0.02, Math.min(1 - by, box.h))
+    const sx = Math.round(bx * iw)
+    const sy = Math.round(by * ih)
+    const sw = Math.max(1, Math.round(bw * iw))
+    const sh = Math.max(1, Math.round(bh * ih))
+    const canvas = document.createElement('canvas')
+    canvas.width = sw
+    canvas.height = sh
+    canvas.getContext('2d')!.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh)
+    const fullOut = drawScaled(canvas, FULL_MAX)
+    const thumbOut = drawScaled(canvas, THUMB_MAX)
+    const [fullBlob, thumbBlob] = await Promise.all([
+      toJpeg(fullOut.canvas, FULL_QUALITY),
+      toJpeg(thumbOut.canvas, THUMB_QUALITY),
+    ])
+    return { full: fullBlob, thumb: thumbBlob, width: fullOut.width, height: fullOut.height }
+  } finally {
+    if ('close' in src) src.close()
+  }
+}
+
 export async function processPhotoFile(file: File): Promise<ProcessedPhoto> {
   const src = await decode(file)
   try {

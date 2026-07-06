@@ -249,8 +249,17 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   Client: `features/ai/recognize.ts` (base64 `photo.full` → POST /api/recognize);
   header **ScanLine** button → image picker → `ItemFormSheet` gains `suggested` +
   `initialPhoto` props (exported `Draft` type) → pre-filled add form, screenshot
-  becomes the photo. Build green. **Pending: user added key to Vercel env, then
-  push+deploy+test on shafka-alpha.vercel.app** (Vercel auto-builds `/api` functions).
+  becomes the photo. Build green. Deployed & function verified live (`/api/recognize`
+  → 405 for GET). **Then extended to MULTI-ITEM** (VK asked "what if several products
+  in one screenshot"): `api/recognize.ts` now returns `items[]`, each with a
+  normalized bounding `box` + label; Claude finds every wearable item. Client
+  `recognizeScreenshot(file)` compresses the shot, calls the function, and
+  `cropPhoto(full, box)` (new in `compress.ts`) crops each item into its own photo.
+  New `AiReviewSheet` lists detected items (cropped thumb + guessed type), per-item
+  category+size chips + include toggle + shared child selector → "Додати N"
+  batch-creates via cloud-first `createItem`. App scan button now opens the review
+  sheet. Single-item `suggested`/`initialPhoto` props on ItemFormSheet kept but
+  unused by AI path now. Build green. **Pending push+deploy+test.**
 
 ## Next
 

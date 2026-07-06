@@ -2,10 +2,10 @@ import Anthropic from '@anthropic-ai/sdk'
 
 // Vercel serverless function (Phase 2 — AI recognition). Runs on the server, so
 // the ANTHROPIC_API_KEY env var stays secret and never reaches the browser.
-// Takes a screenshot + the catalog, asks Claude (vision) to classify the item
-// into the app's own slugs, and returns a structured suggestion the user then
-// reviews and approves. Typed loosely (any) — Vercel bundles this with esbuild,
-// separate from the app's tsc build.
+// Takes a screenshot + the catalog, asks Claude (vision) to find EVERY wearable
+// item and classify each into the app's own slugs, with a bounding box so the
+// client can crop each item into its own photo. Typed loosely (any) — Vercel
+// bundles this with esbuild, separate from the app's tsc build.
 
 const client = new Anthropic() // reads ANTHROPIC_API_KEY
 
@@ -25,7 +25,7 @@ export default async function handler(req: any, res: any) {
     return
   }
   try {
-    const { imageBase64, mediaType, sections, seasons, statuses } = req.body ?? {}
+    const { imageBase64, mediaType, sections, seasons } = req.body ?? {}
     if (!imageBase64 || !mediaType || !Array.isArray(sections) || !sections.length) {
       res.status(400).json({ error: 'bad_request' })
       return
@@ -33,28 +33,43 @@ export default async function handler(req: any, res: any) {
 
     const sectionList = sections as Section[]
     const seasonList = (seasons ?? []) as CatEntry[]
-    const statusList = (statuses ?? []) as CatEntry[]
 
     const sectionSlugs = sectionList.map((s) => s.slug)
     const categorySlugs = sectionList.flatMap((s) => (s.categories ?? []).map((c) => c.slug))
     const seasonSlugs = seasonList.map((s) => s.slug)
-    const statusSlugs = statusList.map((s) => s.slug)
 
     // Force the model's answer into the app's exact slugs. '' = "unsure / leave to user".
-    const schema = {
+    const itemSchema = {
       type: 'object',
       additionalProperties: false,
       properties: {
+        label: { type: 'string' },
         section: { type: 'string', enum: sectionSlugs },
         category: { type: 'string', enum: categorySlugs },
         color: { type: 'string' },
         season: { type: 'string', enum: [...seasonSlugs, ''] },
-        status: { type: 'string', enum: [...statusSlugs, ''] },
         size: { type: 'string' },
         note: { type: 'string' },
         confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+        box: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            x: { type: 'number' },
+            y: { type: 'number' },
+            w: { type: 'number' },
+            h: { type: 'number' },
+          },
+          required: ['x', 'y', 'w', 'h'],
+        },
       },
-      required: ['section', 'category', 'color', 'season', 'status', 'size', 'note', 'confidence'],
+      required: ['label', 'section', 'category', 'color', 'season', 'size', 'note', 'confidence', 'box'],
+    }
+    const schema = {
+      type: 'object',
+      additionalProperties: false,
+      properties: { items: { type: 'array', items: itemSchema } },
+      required: ['items'],
     }
 
     const catalogText = sectionList
@@ -62,26 +77,29 @@ export default async function handler(req: any, res: any) {
       .join('\n')
     const seasonText = seasonList.map((s) => `${s.slug}=${s.label}`).join(', ')
 
-    const prompt = `You are cataloguing a child's clothing item from a screenshot of an online shop. Identify the SINGLE main garment/item shown and classify it using ONLY the provided slugs.
+    const prompt = `Identify EVERY distinct wearable item (clothing, footwear, accessory) shown in this screenshot from an online shop. Classify each using ONLY the provided slugs, and give a tight bounding box for each.
 
 Sections and their categories:
 ${catalogText}
 
 Seasons: ${seasonText}
 
-Rules:
-- section: the best-fitting section slug for the item.
+For each item return:
+- label: a short Ukrainian phrase to tell items apart (e.g. "рожева сукня", "сині кросівки").
+- section: the best-fitting section slug.
 - category: a category slug that belongs to that section.
-- color: the dominant colour, in Ukrainian, lowercase and short (e.g. "синій", "рожевий з квіточками"). Empty string if unclear.
-- season: a season slug only if the item strongly implies one (a coat → winter, shorts → summer); otherwise empty string.
-- size: only if a size is clearly shown as text in the screenshot; otherwise empty string.
-- status: always empty string (the user sets this).
-- note: a short helpful note in Ukrainian (brand, pattern, or material) or empty string.
-- confidence: how confident you are in the category.`
+- color: dominant colour in Ukrainian, lowercase, short. Empty string if unclear.
+- season: a season slug only if strongly implied (coat → winter, shorts → summer); otherwise empty string.
+- size: only if a size is clearly shown as text near the item; otherwise empty string.
+- note: a short Ukrainian note (brand/pattern/material) or empty string.
+- confidence: your confidence in the category.
+- box: {x, y, w, h} as FRACTIONS of the image (x,y = top-left corner; w,h = width/height; all between 0 and 1) tightly around the item.
+
+Ignore human faces, backgrounds, prices, and logos — only actual wearable products. If there is only one item, return a single-element list.`
 
     const response: any = await client.messages.create({
       model: 'claude-opus-4-8',
-      max_tokens: 1024,
+      max_tokens: 2048,
       output_config: { format: { type: 'json_schema', schema } },
       messages: [
         {
@@ -103,8 +121,8 @@ Rules:
       res.status(502).json({ error: 'no_output' })
       return
     }
-    const suggestion = JSON.parse(textBlock.text)
-    res.status(200).json({ suggestion })
+    const parsed = JSON.parse(textBlock.text)
+    res.status(200).json({ items: Array.isArray(parsed?.items) ? parsed.items : [] })
   } catch (e: any) {
     const status = e?.status
     if (status === 401 || status === 403) {
