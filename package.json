@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.110.0",
     "@fontsource/rubik": "^5.2.5",
     "@fontsource/unbounded": "^5.2.5",
+    "@imgly/background-removal": "^1.7.0",
     "@supabase/supabase-js": "^2.110.0",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",

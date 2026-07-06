@@ -273,6 +273,42 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   data touched) — output photo came back square (748×748 full, 320×320 thumb) and
   the grid tile showed the full garment with no cut-off edges. Build green.
 
+- **2026-07-06** — **Bug fix (SHA-19 follow-up #2): square-pad clamp still chopped
+  very tall items.** The 2026-07-06 pad-to-square fix clamped the crop square to
+  `min(screenshot width, screenshot height)`, so an item taller than the screenshot
+  is wide (pants, a dress) still lost its ends. Fixed in `cropPhoto`: pads with
+  white beyond the screenshot's own edges instead of shrinking to fit. Also
+  loosened the recognition prompt (`api/recognize.ts`) — no longer asks for a
+  "tight" box, now explicitly requires the box to enclose the whole garment
+  edge-to-edge. Build green. **Deployed** (commit `e02f006`) to
+  `https://shafka-alpha.vercel.app` (see Vercel note below).
+
+- **2026-07-06** — **Marharyta's local Vercel link pointed at VK's team**
+  (`.vercel/project.json` had VK's org id — likely a stale copy from early setup),
+  so deploys from her machine failed with "Not authorized". Found she already has
+  her own project (`shafka` in her own Vercel team, matching the 2026-07-05 decision
+  below); relinked local `.vercel/project.json` to it (`vercel link --scope shafka
+  --project shafka`). Old link backed up to `.vercel/project.json.old-vitalii-backup`.
+  Confirmed her project already has all three env vars set (`ANTHROPIC_API_KEY`,
+  `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) — nothing else to migrate.
+
+- **2026-07-06** — **Background removal added for AI-scanned photos (SHA-19
+  follow-up #3).** Marharyta reported scanned items still showed their
+  original shop-photo backdrop (e.g. a black studio background) once the crop
+  itself stopped chopping them. Added `@imgly/background-removal` (client-side,
+  WASM, no new server/API key/cost) — new `whitenBackground()` in `compress.ts`
+  runs right after `cropPhoto`, cuts the garment out and re-composites it onto
+  plain white, then re-encodes full+thumb through the existing pipeline. Wired
+  into `features/ai/recognize.ts` only (manual camera photos untouched, by
+  Marharyta's choice), with a fallback to the plain crop if removal throws.
+  Build + prod build green. **Caveat: the ONNX runtime engine bundled for this
+  is ~24MB (gzip ~5.6MB)**, lazy-loaded on first scan (not in the PWA precache),
+  cached by the browser after. Scanning already requires being online, so this
+  fits, but makes the first post-deploy scan noticeably heavier on mobile data.
+  **Pending: Marharyta to test a real scan on a dark-backdrop shop photo and
+  confirm the white background looks right** (imperfect edges on fuzzy/sheer
+  fabric are expected — same class of limitation as any background-removal tool).
+
 ## Next
 
 **Status (2026-07-06): shipped & live at https://shafka-alpha.vercel.app** (Marharyta's
@@ -292,7 +328,9 @@ What's live now:
 - **AI recognition (SHA-19):** header scan icon → Claude `opus-4-8` **vision** via a
   Vercel serverless function `api/recognize.ts` (server-only `ANTHROPIC_API_KEY`, VK's
   own key, ~1–2¢/scan) → **multi-item** detect with bounding boxes → each cropped
-  (`cropPhoto`) → `AiReviewSheet` (pick which, per-item type/size, shared child) →
+  (`cropPhoto`, white-padded to a square, no clamp) → background removed and
+  re-composited onto white (`whitenBackground`, `@imgly/background-removal`,
+  client-side) → `AiReviewSheet` (pick which, per-item type/size, shared child) →
   cloud-first batch add.
 
 Deploy = commit → push `origin/main` → Vercel auto-builds the app + `/api` functions.
@@ -304,6 +342,11 @@ Open / optional follow-ups:
 3. Resend custom-email domain — only needed if magic-link/reset emails matter again
    (password login is primary, so optional).
 4. Two-person git rule until branch protection exists: pull before work, pull before push.
+5. Background-removal engine (~24MB, gzip ~5.6MB) downloads once on first scan per
+   browser — could self-host/pin a smaller model tier later if that proves annoying.
+6. Linear MCP added to Marharyta's local Claude Code (project-scoped `.mcp.json`,
+   `https://mcp.linear.app/sse`) — **still needs her to authenticate via `/mcp`**
+   (OAuth to her own `linear.app/shafka` workspace) before it's usable.
 
 ## Decisions
 

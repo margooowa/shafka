@@ -6,3 +6,6 @@ dist/
 *.local.md
 .DS_Store
 .vercel
+
+.vercel
+.env*

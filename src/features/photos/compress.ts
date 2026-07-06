@@ -1,3 +1,4 @@
+import { removeBackground } from '@imgly/background-removal'
 import type { ProcessedPhoto } from '../../data/db'
 
 // Photo pipeline per PLAN §4.1: one decode, two JPEG outputs —
@@ -135,6 +136,38 @@ export async function cropPhoto(
     ctx.fillStyle = '#fff'
     ctx.fillRect(0, 0, sw, sh)
     ctx.drawImage(src, -sx, -sy)
+    const fullOut = drawScaled(canvas, FULL_MAX)
+    const thumbOut = drawScaled(canvas, THUMB_MAX)
+    const [fullBlob, thumbBlob] = await Promise.all([
+      toJpeg(fullOut.canvas, FULL_QUALITY),
+      toJpeg(thumbOut.canvas, THUMB_QUALITY),
+    ])
+    return { full: fullBlob, thumb: thumbBlob, width: fullOut.width, height: fullOut.height }
+  } finally {
+    if ('close' in src) src.close()
+  }
+}
+
+/**
+ * Cut the garment out of an AI-cropped photo and re-composite it onto plain
+ * white, then re-encode full+thumb. Only meant for AI recognition: a scanned
+ * shop screenshot can have any studio backdrop (black, colored, patterned),
+ * which the crop above faithfully preserves — this is the step that actually
+ * normalizes it. Runs entirely on-device (no photo data leaves the browser);
+ * the segmentation model itself is fetched from a CDN on first use.
+ */
+export async function whitenBackground(photo: ProcessedPhoto): Promise<ProcessedPhoto> {
+  const cutout = await removeBackground(photo.full)
+  const src = await decode(cutout)
+  try {
+    const { w, h } = sourceSize(src)
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, w, h)
+    ctx.drawImage(src, 0, 0)
     const fullOut = drawScaled(canvas, FULL_MAX)
     const thumbOut = drawScaled(canvas, THUMB_MAX)
     const [fullBlob, thumbBlob] = await Promise.all([

@@ -1,4 +1,4 @@
-import { cropPhoto, processPhotoFile } from '../photos/compress'
+import { cropPhoto, processPhotoFile, whitenBackground } from '../photos/compress'
 import type { ProcessedPhoto } from '../../data/db'
 import { SECTIONS, SECTION_ORDER, SEASONS } from '../../data/catalog'
 
@@ -84,12 +84,18 @@ export async function recognizeScreenshot(file: File): Promise<RecognizedItem[]>
   const detected: Detected[] = Array.isArray(data?.items) ? data.items : []
   if (!detected.length) return []
 
-  // Crop each detected item out of the screenshot into its own photo.
+  // Crop each detected item out of the screenshot into its own photo, then
+  // cut the garment out and re-composite it onto white (shop backdrops vary).
   const items: RecognizedItem[] = []
   for (const d of detected.slice(0, 12)) {
     try {
       const photo = await cropPhoto(screenshot.full, d.box)
-      items.push({ ...d, photo })
+      try {
+        items.push({ ...d, photo: await whitenBackground(photo) })
+      } catch {
+        // Fallback: keep the plain crop if background removal fails.
+        items.push({ ...d, photo })
+      }
     } catch {
       // Fallback: use the whole screenshot if the crop fails.
       items.push({ ...d, photo: screenshot })
