@@ -263,21 +263,35 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
 
 ## Next
 
-1. **Marharyta onboarding — DONE** (see 2026-07-04). Code on `margooowa/shafka`,
-   app builds & runs on her laptop. Resolved: **`margooowa/shafka` is now the
-   canonical/main repo** the team works from; **her Shafka commits use personal
-   identity `margooowa <margooowa@ukr.net>`** (set per-repo, work global identity
-   untouched). Open follow-ups: (b) add her to Linear team Shafka? (c) PR workflow
-   / branch protection wanted? (d) VK to pull `margooowa/shafka` as the source of
-   truth going forward (his `kozub88/shafka` no longer primary).
-   Resolved (2026-07-05): she uses her **own** Linear (`linear.app/shafka`), not
-   VK's. Phase 2 (AI photo recognition) backlog drafted — 7 issues ready to seed
-   her board (source-field migration + key-handling decision unblock the rest).
-   Optional: connect the Linear connector on her laptop so Claude can drive her board.
-2. **VK, to close SHF-10 + Phase 1:** one-time data move (export at :5173 →
-   import at https://shafka.vercel.app), install PWA on S26 Ultra (Chrome ⋮ →
-   Add to Home screen), then the real in-store 20-second acceptance test.
-3. Two-person git rule until protection exists: pull before work, pull before push.
+**Status (2026-07-06): shipped & live at https://shafka-alpha.vercel.app** (Marharyta's
+own Vercel project, imported `margooowa/shafka`, auto-deploy on push to `main`).
+Phase 1 (local PWA) + Phase 2 (cloud sync) + AI recognition are all done and deployed.
+
+What's live now:
+- **Cloud sync across devices** on Supabase (project `bkxnkwijzttvqmciqbfb`, region
+  **eu-west-3**). **Cloud-first writes** — the DB is the source of truth; add/edit/
+  delete require the DB and block offline with a message (Dexie is a read cache).
+- **Email + password** login (`sanmarso` set for `margooowa91@gmail.com`); emailed
+  6-digit code kept as a fallback. Auth session in localStorage → offline viewing OK.
+- **Filters:** size · type · season, independent faceted (SHA-15). **Grid density
+  toggle** (SHA-18). **Higher photo quality** (1600px/q0.85) + desktop-width layout
+  (SHA-17). **PWA auto-update** — deploys self-refresh, no cache-clearing (SHA-16).
+- **Photo rotate** in the form (SHA-13). Export/import zip backup (Phase 1).
+- **AI recognition (SHA-19):** header scan icon → Claude `opus-4-8` **vision** via a
+  Vercel serverless function `api/recognize.ts` (server-only `ANTHROPIC_API_KEY`, VK's
+  own key, ~1–2¢/scan) → **multi-item** detect with bounding boxes → each cropped
+  (`cropPhoto`) → `AiReviewSheet` (pick which, per-item type/size, shared child) →
+  cloud-first batch add.
+
+Deploy = commit → push `origin/main` → Vercel auto-builds the app + `/api` functions.
+
+Open / optional follow-ups:
+1. **Rotate the Supabase DB password** `sanmarso123` if desired (shared in chat during
+   setup; the app never uses it — publishable key only).
+2. AI crops on busy grids can be loose — could add manual re-crop / box nudge later.
+3. Resend custom-email domain — only needed if magic-link/reset emails matter again
+   (password login is primary, so optional).
+4. Two-person git rule until branch protection exists: pull before work, pull before push.
 
 ## Decisions
 
