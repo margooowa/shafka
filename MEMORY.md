@@ -309,6 +309,15 @@ and why. Read alongside CLAUDE.md at session start (same convention as TravCozy)
   confirm the white background looks right** (imperfect edges on fuzzy/sheer
   fabric are expected — same class of limitation as any background-removal tool).
 
+- **2026-07-08** — **Swimwear category + AI size-picker fix.** Added `swimwear` /
+  "Купальники" to the clothes catalog (`data/catalog.ts`, purely additive — no
+  migration). Recognition prompt fix: `size` was left blank whenever a screenshot
+  showed a multi-option size-picker even when one option was visually selected;
+  prompt now explicitly says to use the selected/highlighted value instead of
+  treating it as ambiguous. Build green, deployed (commit `9e80802`).
+  **Pending: real-scan test on a product with a size-picker** to confirm it
+  actually picks the selected size (and that swimwear classifies correctly).
+
 ## Next
 
 **Status (2026-07-06): shipped & live at https://shafka-alpha.vercel.app** (Marharyta's
