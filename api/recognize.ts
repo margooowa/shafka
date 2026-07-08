@@ -90,7 +90,7 @@ For each item return:
 - category: a category slug that belongs to that section.
 - color: dominant colour in Ukrainian, lowercase, short. Empty string if unclear.
 - season: a season slug only if strongly implied (coat → winter, shorts → summer); otherwise empty string.
-- size: only if a size is clearly shown as text near the item; otherwise empty string.
+- size: if a single size is shown as plain text near the item, use it. If a size-picker with several options is visible (e.g. a row of buttons like 86 92 98 104) and ONE is visually marked as selected/active (distinct fill colour, border, checkmark, or bold vs. the others), use that selected value — do not leave it empty just because multiple options are shown. If several options are visible with none clearly selected, leave it empty.
 - note: a short Ukrainian note (brand/pattern/material) or empty string.
 - confidence: your confidence in the category.
 - box: {x, y, w, h} as FRACTIONS of the image (x,y = top-left corner; w,h = width/height; all between 0 and 1). Must fully enclose the ENTIRE garment/item — every edge (collar to hem, waist to ankle, etc.), not just its most visible or decorated part. Only shrink the box where the item is genuinely cut off by the photo itself or hidden behind another item.

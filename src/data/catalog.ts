@@ -50,6 +50,7 @@ export const SECTIONS: Record<SectionSlug, SectionDef> = {
       { slug: 'dresses', label: 'Сукні та спідниці' },
       { slug: 'outerwear', label: 'Верхній одяг' },
       { slug: 'pajamas', label: 'Піжами' },
+      { slug: 'swimwear', label: 'Купальники' },
     ],
   },
   shoes: {
